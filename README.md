@@ -1,2 +1,2 @@
-# nextjs-rete-flow-diagram-editor
-Learning to build a flow diagram editor with rete JS and Next JS
+# react-tsx-rete-flow-diagram-editor
+Learning to build a flow diagram editor with react js, rete
