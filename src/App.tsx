@@ -1,26 +1,42 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { useEffect, useRef, useState } from "react";
+import { createEditor } from "./flow-editor/editor";
 
-function App() {
+export function useRete(create: (el: HTMLElement) => Promise<() => void>) {
+  const [container, setContainer] = useState(null);
+  const editorRef = useRef<Awaited<ReturnType<typeof create>>>(null);
+
+  useEffect(() => {
+    if (container) {
+      create(container).then((value) => {
+        (editorRef as any).current = value;
+      });
+    }
+  }, [container]);
+
+  useEffect(() => {
+    return () => {
+      if (editorRef.current) {
+        editorRef.current();
+      }
+    };
+  }, []);
+
+  return [setContainer];
+}
+
+export default function App() {
+  const [setContainer] = useRete(createEditor);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      setContainer(ref.current);
+    }
+  }, [ref.current]);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <div ref={ref} style={{ height: "100vh", width: "100vw" }}></div>
     </div>
   );
 }
-
-export default App;
