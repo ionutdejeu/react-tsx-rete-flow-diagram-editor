@@ -62,7 +62,6 @@ class AddNode extends ClassicPreset.Node<
         super("Add");
         const left = new ClassicPreset.Input(socket, "Left");
         const right = new ClassicPreset.Input(socket, "Right");
-
         left.addControl(
             new ClassicPreset.InputControl("number", { initial: 0, change })
         );
@@ -81,9 +80,6 @@ class AddNode extends ClassicPreset.Node<
 
         this.addOutput("value", new ClassicPreset.Output(socket, "Number"));
     }
-
-
-
 
     data(inputs: { left?: number[]; right?: number[] }): { value: number } {
         const leftControl = this.inputs.left?.control as ClassicPreset.InputControl<

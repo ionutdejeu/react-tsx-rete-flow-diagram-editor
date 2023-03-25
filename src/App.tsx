@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createEditor } from "./flow-editor/editor";
+import { ItemsDnd } from "./form-editor/itemsDnd";
 
 export function useRete(create: (el: HTMLElement) => Promise<() => void>) {
   const [container, setContainer] = useState(null);
@@ -35,8 +36,17 @@ export default function App() {
   }, [ref.current]);
 
   return (
-    <div className="App">
-      <div ref={ref} style={{ height: "100vh", width: "100vw" }}></div>
+    <div className="h-100 w-100">
+      <div className="container-fluid no-gutters p-0 m-0 h-100 ">
+        <div className="row h-100">
+          <div className="col-4 border border-danger" >
+            <ItemsDnd></ItemsDnd>
+          </div>
+          <div className="col w-75">
+            <div ref={ref} className="h-100 w-100"></div>
+          </div >
+        </div >
+      </div>
     </div>
   );
 }

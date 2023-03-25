@@ -1,0 +1,136 @@
+form {
+  margin: 0 auto;
+}
+
+
+.form {
+  margin: 0 auto;
+}
+
+p::before {
+  display: inline;
+  /* content: "⚠ "; */
+}
+
+input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid white;  
+}
+
+label {
+  line-height: 2;
+  text-align: left;
+  display: block;
+  margin-bottom: 13px;
+  margin-top: 20px;
+  color: white;
+  font-size: 14px;
+  font-weight: 200;
+}
+
+button[type="submit"],
+input[type="submit"] {
+  background: #ec5990;
+  color: white;
+  text-transform: uppercase;
+}
+
+button[type="submit"]:hover,
+input[type="submit"]:hover {
+  background: #bf1650;
+}
+
+button[type="submit"]:active,
+input[type="button"]:active,
+input[type="submit"]:active {
+
+}
+
+input:disabled {
+  opacity: 0.4;
+}
+
+input[type="button"]:hover {
+  transition: 0.3s all;
+}
+
+button[type="submit"],
+input[type="button"],
+input[type="submit"] {
+  -webkit-appearance: none;
+}
+
+.App {
+  min-width: 100%;
+  margin: 0 auto;
+  padding: 0;
+}
+
+button[type="button"] {
+  display: block;
+  appearance: none;
+  background: #333;
+  color: white;
+  border: none;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  border-radius: 4px;
+}
+
+ 
+
+button {
+  display: block;
+  appearance: none;
+  margin-top: 40px;
+  border: 1px solid #333;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  border-radius: 4px;
+}
+
+pre {
+  color: white;
+  white-space: pre;
+}
+
+ul {
+  margin: 0!important;
+  padding: 0!important;
+}
+
+section,
+li {
+  display: grid;
+  grid-template-columns: 0.1fr 1fr 1fr;
+  grid-gap: 0px;
+}
+
+section {
+  grid-template-columns: 0.1fr 0.1fr 0.1fr 0.1fr;
+}
+
+section>button {
+  margin: 0;
+  padding: 1px;
+  height: 40px;
+}
+
+li>input,
+li>button {
+  margin: 0;
+}
+
+.counter {
+  font-weight: 400;
+  background: white;
+  color: black;
+  padding: 10px 15px;
+  border-radius: 4px;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+}
