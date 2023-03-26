@@ -1,20 +1,34 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import ReactDOM from "react-dom";
 
 import "./styles.css";
-import { useEditor } from "../shared/editorContext";
+import { useEditor, useEditorWithSubscription } from "../shared/editorContext";
+import { IEditorItem, StoreItemType } from "../shared/types";
 
 let renderCount = 0;
+const compareItems = (a: IEditorItem, b: IEditorItem) => {
+  const nameA = a.itemName.toUpperCase(); // ignore upper and lowercase
+  const nameB = b.itemName.toUpperCase(); // ignore upper and lowercase
+  if (nameA < nameB) {
+    return -1;
+  }
+  if (nameA > nameB) {
+    return 1;
+  }
+
+  // names must be equal
+  return 0;
+}
 
 export function ItemsDnd() {
-  const [store,setStore] = useEditor()
-  const { register, control, handleSubmit } = useForm({
+  const [store, setStore, notifyTopic, subscribeTopic] = useEditorWithSubscription()
+  const { register, control, handleSubmit, watch } = useForm({
     defaultValues: {
       test: [
-        { items: "flight", firstName: "Add Description" },
-        { items: "train", firstName: "Add Description" }
+        { parentItem: "", itemName: "Element1" },
+        { parentItem: "Element1", itemName: "Element2" }
       ]
     }
   });
@@ -22,9 +36,29 @@ export function ItemsDnd() {
     control,
     name: "test"
   });
-
+  const [orderedItem, setOrderedItems] = useState<IEditorItem[]>([])
+  useEffect(() => {
+    const subscription = watch((value, { name, type }) => {
+      let originalItems = value.test as IEditorItem[] || []
+      originalItems.sort(compareItems)
+      setOrderedItems([...originalItems])
+      console.log('updated ordered items',originalItems)
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
   const onSubmit = (data: any) => console.log("data", data);
 
+
+  const watchFieldArrayChanges = watch('test')
+
+  useEffect(() => {
+    //sync the store 
+    console.log('watch', watchFieldArrayChanges)
+    setStore({
+      formItems: fields
+    })
+
+  }, [watchFieldArrayChanges])
   //uses move from useFieldArray to change the position of the form
   const handleDrag = ({ source, destination }: any) => {
     if (destination) {
@@ -39,7 +73,7 @@ export function ItemsDnd() {
       <span className="counter">Render Count: {renderCount}</span>
       <DragDropContext onDragEnd={handleDrag}>
         <ul>
-          <Droppable droppableId="test">
+          <Droppable droppableId="test-items">
             {(provided, snapshot) => (
               <div {...provided.droppableProps} ref={provided.innerRef}>
                 {fields.map((item, index) => {
@@ -51,7 +85,7 @@ export function ItemsDnd() {
                     >
                       {(provided, snapshot) => (
                         <li
-                          key={item.id}
+                          key={index}
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                         >
@@ -66,32 +100,31 @@ export function ItemsDnd() {
                           >
                             D
                           </div>
-                          <select
-                            defaultValue={`${item.items}`}
-                            {...register(`test.${index}.items`)}
-                          >
-                            <option value="">Select</option>
-                            <option value="flight">Travel via flight</option>
-                            <option value="train">Travel via Train</option>
-                            <option value="carBus">
-                              Travel via car or bus
-                            </option>
-                            <option value="water">Travel via water</option>
-                            <option value="bicycle">Travel via bicycle</option>
-                            <option value="foot">Travel via foot</option>
-                            <option value="travelOther">
-                              Travel via other form
-                            </option>
-                            <option value="lodging">Lodging</option>
-                            <option value="food">Food or Drink</option>
-                            <option value="activity">Activity</option>
-                          </select>
-
                           <input
-                            defaultValue={`${item.firstName}`} // make sure to set up defaultValue
-                            {...register(`test.${index}.firstName`)}
+                            defaultValue={`${item.itemName}`} // make sure to set up defaultValue
+                            {...register(`test.${index}.itemName`)}
                           />
-
+                          <div className="form-group">
+                            <Controller
+                              name={`test.${index}.parentItem` as const}
+                              control={control}
+                              rules={{ required: true }}
+                              render={({ field: { onChange, value, ref } }) => (
+                                <div>
+                                  <select className="form-control" id={`tests.${index}.parentItem` as const} onChange={onChange}
+                                    defaultValue={value || "NotSelected"}
+                                    value={value || "NotSelected"} ref={ref}>
+                                    <option value="NotSelected">NotSelected</option>
+                                    {
+                                      orderedItem.map((opt, index) => {
+                                        return (<option key={index} value={opt.itemName}>{opt.itemName}</option>)
+                                      })
+                                    }
+                                  </select>
+                                </div>
+                              )}
+                            />
+                          </div>
                         </li>
                       )}
                     </Draggable>
@@ -109,7 +142,9 @@ export function ItemsDnd() {
         <button
           type="button"
           onClick={() => {
-            append({ items: "flight", firstName: "Append Description" });
+            let newItem: IEditorItem = { parentItem: "", itemName: "NewItemName" }
+            notifyTopic("added", newItem)
+            append(newItem);
           }}
         >
           Append
@@ -118,6 +153,7 @@ export function ItemsDnd() {
         <button
           type="button"
           onClick={() => {
+
             move(0, 1);
           }}
         >

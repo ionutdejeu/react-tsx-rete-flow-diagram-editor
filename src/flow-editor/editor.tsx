@@ -16,6 +16,8 @@ import {
 import { DataflowEngine } from "rete-engine";
 
 import { AutoArrangePlugin } from "rete-auto-arrange-plugin";
+import { IEditorItem } from "../shared/types";
+import { StartNode } from "./nodes/startNode";
 
 const socket = new ClassicPreset.Socket("socket");
 
@@ -107,7 +109,7 @@ class Connection<
     B extends Node
 > extends ClassicPreset.Connection<A, B> { }
 
-type Node = NumberNode | AddNode;
+type Node = NumberNode | AddNode|StartNode;
 type ConnProps = Connection<NumberNode, AddNode> | Connection<AddNode, AddNode>;
 type Schemes = GetSchemes<Node, ConnProps>;
 
@@ -190,10 +192,112 @@ export async function createEditor(container: HTMLElement) {
     await arrange.layout();
     await arrange.layout({
         options: {
-
+        
         }
     })
     AreaExtensions.zoomAt(area, editor.getNodes());
 
     return () => area.destroy();
 }
+
+
+const createStartNode = ()=>{
+    return new StartNode();
+}
+export async function createEditorWithSync(container: HTMLElement) {
+    const editor = new NodeEditor<Schemes>();
+    const area = new AreaPlugin<Schemes, AreaExtra>(container);
+    const connection = new ConnectionPlugin<Schemes, AreaExtra>();
+    const render = new ReactRenderPlugin<Schemes>({ createRoot });
+    const arrange = new AutoArrangePlugin<Schemes>();
+    const engine = new DataflowEngine<Schemes>();
+    
+
+    function process() {
+        engine.reset();
+
+        editor
+            .getNodes()
+            .filter((n) => n instanceof AddNode)
+            .forEach((n) => engine.fetch(n.id));
+    }
+
+    const contextMenu = new ContextMenuPlugin<Schemes, AreaExtra>({
+        items: ContextMenuPresets.classic.setup([
+            ["Number", () => new NumberNode(0, process)],
+            ["Add", () => new AddNode(process, (n) => area.update("node", n.id))]
+        ])
+    });
+    area.use(contextMenu);
+    area.addPipe((middlware)=>{
+        if (["nodepicked"].includes(middlware.type)) {
+            let e = middlware as AreaNodePickedEventType
+            let n = editor.getNode(e.data.id)
+            console.log('area','addPipe',e,n)
+        }
+        return middlware
+    })
+    AreaExtensions.selectableNodes(area, AreaExtensions.selector(), {
+        accumulating: AreaExtensions.accumulateOnCtrl()
+    });
+    
+    render.addPreset(Presets.contextMenu.setup());
+    render.addPreset(Presets.classic.setup({ area }));
+
+    editor.use(engine);
+    editor.use(area);
+    area.use(connection);
+    area.use(render);
+    area.use(arrange);
+
+    AreaExtensions.simpleNodesOrder(area);
+    AreaExtensions.showInputControl(area);
+
+    editor.addPipe((context) => {
+        if (["connectioncreated", "connectionremoved"].includes(context.type)) {
+            process();
+        }
+        return context;
+    });
+
+    editor.addPipe((context) => {
+        console.log('addPipe', 'click', context)
+        return context;
+    })
+
+    const onItemAddedCallbackHandle = (item:IEditorItem) =>{
+        console.log('onItemAddedCallbackHandle',item)
+        const newN = new NumberNode(1, process);
+        editor.addNode(newN).then((v)=>{
+            return v
+        });
+    }
+    const a = new NumberNode(1, process);
+    const b = new NumberNode(1, process);
+    const c = new AddNode(process, (n) => area.update("node", n.id));
+
+    const con1 = new Connection(a, "value", c, "left");
+    const con2 = new Connection(b, "value", c, "right");
+
+    await editor.addNode(createStartNode())
+    await editor.addNode(a);
+    await editor.addNode(b);
+    await editor.addNode(c);
+
+    await editor.addConnection(con1);
+    await editor.addConnection(con2);
+
+    await arrange.layout();
+    await arrange.layout({
+        options: {
+
+        }
+    })
+    AreaExtensions.zoomAt(area, editor.getNodes());
+
+    return {
+        destroy:() => area.destroy(),
+        itemAddedEventHandler:onItemAddedCallbackHandle
+    }
+}
+

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { createEditor } from "./flow-editor/editor";
+import { createEditor, createEditorWithSync } from "./flow-editor/editor";
 import { ItemsDnd } from "./form-editor/itemsDnd";
+import { Provider, useEditor, useEditorWithSubscription, useStoreValue,StoreType } from "./shared/editorContext";
+import { IEditorItem } from "./shared/types";
 
 export function useRete(create: (el: HTMLElement) => Promise<() => void>) {
   const [container, setContainer] = useState(null);
@@ -25,8 +27,41 @@ export function useRete(create: (el: HTMLElement) => Promise<() => void>) {
   return [setContainer];
 }
 
+export function useReteWithSync(editorCeator: (el: HTMLElement) => Promise<{
+  destroy: () => void,
+  itemAddedEventHandler: (i: IEditorItem) => void
+}>) {
+  const [container, setContainer] = useState(null);
+  const editorRef = useRef<Awaited<ReturnType<typeof editorCeator>>>(null);
+  const [state, setState, notifyTopic, subscribeTopic] = useEditorWithSubscription()
+  //const [val,setStore] = useStoreValue((s:StoreType)=>s.formItems)
+  
+
+  useEffect(() => {
+    if (container) {
+      editorCeator(container).then(({ destroy, itemAddedEventHandler }: Awaited<ReturnType<typeof editorCeator>>) => {
+        (editorRef as any).current = { destroy, itemAddedEventHandler };
+        subscribeTopic("added", itemAddedEventHandler);
+      });
+    }
+  }, [container]);
+
+
+
+  useEffect(() => {
+    return () => {
+      if (editorRef.current) {
+        editorRef.current.destroy()
+      }
+    };
+  }, []);
+
+  return [setContainer];
+}
+
+
 export default function App() {
-  const [setContainer] = useRete(createEditor);
+  const [setContainer] = useReteWithSync(createEditorWithSync);
   const ref = useRef(null);
 
   useEffect(() => {
