@@ -20,15 +20,15 @@
     "react-hook-form": "^7.43.8",
     "react-scripts": "5.0.1",
     "rete": "2.0.0-beta.2",
-    "rete-area-plugin": "2.0.0-beta.4",
-    "rete-auto-arrange-plugin": "2.0.0-beta.1",
+    "rete-area-plugin": "2.0.0-beta.1",
+    "rete-auto-arrange-plugin": "^2.0.0-beta.2",
     "rete-connection-plugin": "2.0.0-beta.1",
     "rete-context-menu-plugin": "2.0.0-beta.1",
     "rete-dock-plugin": "2.0.0-beta.1",
     "rete-engine": "2.0.0-beta.1",
-    "rete-react-render-plugin": "2.0.0-beta.4",
+    "rete-react-render-plugin": "2.0.0-beta.3",
     "rete-render-utils": "2.0.0-beta.1",
-    "styled-components": "5.3.6",
+    "styled-components": "^5.3.9",
     "typescript": "^4.9.5",
     "uuid": "^9.0.0",
     "web-vitals": "^2.1.4",
@@ -59,6 +59,8 @@
     ]
   },
   "devDependencies": {
-    "@types/react-beautiful-dnd": "^13.1.4"
+    "@types/react-beautiful-dnd": "^13.1.4",
+    "@types/styled-components": "^5.1.26",
+    "@types/uuid": "^9.0.1"
   }
 }
