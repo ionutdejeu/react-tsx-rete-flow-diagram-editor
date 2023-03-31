@@ -7,6 +7,8 @@ import {
 } from "rete-react-render-plugin";
 import styled, { css } from "styled-components";
 import { $nodewidth, $socketmargin, $socketsize } from "../constants";
+import { socket } from "./socket";
+import { IEditorItem } from "../../shared/types";
 
 type NodeExtraData = { width?: number; height?: number };
 
@@ -97,25 +99,28 @@ type Props<S extends ClassicScheme> = {
 export type NodeComponent<Scheme extends ClassicScheme> = (
   props: Props<Scheme>
 ) => JSX.Element;
-export class CustomNode2 extends ClassicPreset.Node<
-    {},
-    { value: ClassicPreset.Socket },
-    {}
+export class CustomNodeElemeValue extends ClassicPreset.Node<
+  { in: ClassicPreset.Socket },
+  { [index:string]: ClassicPreset.Socket },
+  { }
 > {
-    height = 120;
-    width = 180;
-
-    constructor() {
-        super("Start");
-
-    }
+  height = 190;
+  width = 180;
+  formData:IEditorItem | null = null;
+  constructor(name:string,formElement:IEditorItem) {
+    super(name);
+    this.formData = formElement   
+    const input = new ClassicPreset.Input(socket, "In");
+    this.addInput("in", input);
+    this.addOutput("Next", new ClassicPreset.Output(socket, "Next"));
+    this.addOutput("Error", new ClassicPreset.Output(socket, "Error"));
     
+  }
 
-    data(): { value: number } {
-        return {
-            value: 0
-        };
-    }
+  data(inputs: { in:string[] }): { value: number } {
+    console.log('data,inputs',inputs.in)
+    return { value:1 };
+  }
 }
 export function CustomNode<Scheme extends ClassicScheme>(props: Props<Scheme>) {
   const inputs = Object.entries(props.data.inputs);

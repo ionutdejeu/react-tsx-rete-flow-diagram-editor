@@ -18,11 +18,15 @@ import { DataflowEngine } from "rete-engine";
 import { AutoArrangePlugin } from "rete-auto-arrange-plugin";
 import { IEditorItem } from "../shared/types";
 import { StartNode } from "./nodes/startNode";
-import { CustomNode } from "./nodes/customNode";
+import { CustomNode, CustomNodeElemeValue } from "./nodes/customNode";
+import { StyledNode } from "./nodes/styledNode";
+import { addCustomBackground } from "./nodes/custom-background";
+import { CustomSocket } from "./nodes/customSocket";
+import { CustomConnection } from "./nodes/CustomConnection";
 
 const socket = new ClassicPreset.Socket("socket");
 
-interface AreaNodePickedEventType  {
+interface AreaNodePickedEventType {
     type: 'nodepicked';
     data: {
         id: string;
@@ -110,7 +114,7 @@ class Connection<
     B extends Node
 > extends ClassicPreset.Connection<A, B> { }
 
-type Node = NumberNode | AddNode| StartNode;
+type Node = NumberNode | AddNode | StartNode | CustomNodeElemeValue;
 type ConnProps = Connection<NumberNode, AddNode> | Connection<AddNode, AddNode>;
 type Schemes = GetSchemes<Node, ConnProps>;
 
@@ -124,20 +128,16 @@ export async function createEditor(container: HTMLElement) {
     const arrange = new AutoArrangePlugin<Schemes>();
     const engine = new DataflowEngine<Schemes>();
 
-    //render.addPreset(
-    //    Presets.classic.setup({
-    //      area,
-    //      customize: {
-    //        node(context) {
-    //          if (context.payload.label === "Fully customized") {
-    //            return CustomNode;
-    //          }
-    //           
-    //          return Presets.classic.Node;
-    //        },
-    //      }
-    //    })
-    //);
+    render.addPreset(
+        Presets.classic.setup({
+            area,
+            customize: {
+                node(context) {
+                    return StyledNode;
+                },
+            }
+        })
+    );
     function process() {
         engine.reset();
 
@@ -154,11 +154,11 @@ export async function createEditor(container: HTMLElement) {
         ])
     });
     area.use(contextMenu);
-    area.addPipe((middlware)=>{
+    area.addPipe((middlware) => {
         if (["nodepicked"].includes(middlware.type)) {
             let e = middlware as AreaNodePickedEventType
             let n = editor.getNode(e.data.id)
-            console.log('area','addPipe',e,n)
+            console.log('area', 'addPipe', e, n)
         }
         return middlware
     })
@@ -167,7 +167,7 @@ export async function createEditor(container: HTMLElement) {
     });
 
     render.addPreset(Presets.contextMenu.setup());
-    render.addPreset(Presets.classic.setup({ area }));
+    //render.addPreset(Presets.classic.setup({ area }));
 
     editor.use(engine);
     editor.use(area);
@@ -204,6 +204,22 @@ export async function createEditor(container: HTMLElement) {
     await editor.addConnection(con1);
     await editor.addConnection(con2);
 
+    //const a1 = new CustomNodeElemeValue("Override styles");
+    //a1.addOutput("a", new ClassicPreset.Output(socket));
+    //a1.addInput("a", new ClassicPreset.Input(socket));
+    //await editor.addNode(a);
+
+    //const b1 = new ClassicPreset.Node("Fully customized");
+    //b1.addOutput("a", new ClassicPreset.Output(socket));
+    //b1.addInput("a", new ClassicPreset.Input(socket));
+    //await editor.addNode(b);
+
+    //await area.translate(a.id, { x: 0, y: 0 });
+    //await area.translate(b.id, { x: 300, y: 0 });
+
+    //await editor.addConnection(new ClassicPreset.Connection(a, "a", b, "a"));
+
+
     await arrange.layout();
     AreaExtensions.zoomAt(area, editor.getNodes());
 
@@ -211,7 +227,7 @@ export async function createEditor(container: HTMLElement) {
 }
 
 
-const createStartNode = ()=>{
+const createStartNode = () => {
     return new StartNode();
 }
 export async function createEditorWithSync(container: HTMLElement) {
@@ -221,7 +237,7 @@ export async function createEditorWithSync(container: HTMLElement) {
     const render = new ReactRenderPlugin<Schemes>({ createRoot });
     const arrange = new AutoArrangePlugin<Schemes>();
     const engine = new DataflowEngine<Schemes>();
-    
+
 
     function process() {
         engine.reset();
@@ -239,20 +255,37 @@ export async function createEditorWithSync(container: HTMLElement) {
         ])
     });
     area.use(contextMenu);
-    area.addPipe((middlware)=>{
+    area.addPipe((middlware) => {
         if (["nodepicked"].includes(middlware.type)) {
             let e = middlware as AreaNodePickedEventType
             let n = editor.getNode(e.data.id)
-            console.log('area','addPipe',e,n)
+            console.log('area', 'addPipe', e, n)
         }
         return middlware
     })
     AreaExtensions.selectableNodes(area, AreaExtensions.selector(), {
         accumulating: AreaExtensions.accumulateOnCtrl()
     });
-    
+
     render.addPreset(Presets.contextMenu.setup());
-    render.addPreset(Presets.classic.setup({ area }));
+    //render.addPreset(Presets.classic.setup({ area }));
+    render.addPreset(
+        Presets.classic.setup({
+            area,
+            customize: {
+                node(context) {
+                    return CustomNode;
+                },
+                socket(context) {
+                  return CustomSocket;
+                },
+                connection(context) {
+                  return CustomConnection;
+                }
+            }
+        })
+    );
+    addCustomBackground(area);
 
     editor.use(engine);
     editor.use(area);
@@ -275,10 +308,10 @@ export async function createEditorWithSync(container: HTMLElement) {
         return context;
     })
 
-    const onItemAddedCallbackHandle = (item:IEditorItem) =>{
-        console.log('onItemAddedCallbackHandle',item)
-        const newN = new NumberNode(1, process);
-        editor.addNode(newN).then((v)=>{
+    const onItemAddedCallbackHandle = (item: IEditorItem) => {
+        console.log('onItemAddedCallbackHandle', item)
+        const newN = new CustomNodeElemeValue(item.itemName, item);
+        editor.addNode(newN).then((v) => {
             return v
         });
     }
@@ -306,8 +339,8 @@ export async function createEditorWithSync(container: HTMLElement) {
     AreaExtensions.zoomAt(area, editor.getNodes());
 
     return {
-        destroy:() => area.destroy(),
-        itemAddedEventHandler:onItemAddedCallbackHandle
+        destroy: () => area.destroy(),
+        itemAddedEventHandler: onItemAddedCallbackHandle
     }
 }
 

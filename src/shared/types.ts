@@ -1,9 +1,20 @@
 import { ClassicPreset } from "rete";
 
+export interface uniqueItem  {
+    uuid:string
+    name:string
+}
+export interface IEditorSubItem {
+    name: string;
+    nextItem:uniqueItem
+}
+
 
 export interface IEditorItem {
-    parentItem: string;
+    uuid:string,
     itemName: string;
+    subItems:IEditorSubItem[]
+    nextItem:uniqueItem
 }
 export type StoreItemType = {
     formItemIndex: number,

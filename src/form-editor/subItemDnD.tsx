@@ -7,25 +7,10 @@ import "./styles.css";
 import { useEditor, useEditorWithSubscription } from "../shared/editorContext";
 import { IEditorItem, StoreItemType, uniqueItem } from "../shared/types";
 import { v4 as uuid } from 'uuid'
+import { compareItems } from "./shared";
 
 let renderCount = 0;
-const compareItems = (a: IEditorItem, b: IEditorItem) => {
-  const nameA = a.itemName.toUpperCase(); // ignore upper and lowercase
-  const nameB = b.itemName.toUpperCase(); // ignore upper and lowercase
-  if (nameA < nameB) {
-    return -1;
-  }
-  if (nameA > nameB) {
-    return 1;
-  }
-
-  // names must be equal
-  return 0;
-}
-const mapItemToUniqueitem = (editorItem: IEditorItem): uniqueItem => {
-  return { uuid: editorItem.uuid, name: editorItem.itemName }
-}
-
+ 
 export function ItemsDnd() {
   const [store, setStore, notifyTopic, subscribeTopic] = useEditorWithSubscription()
   const defaultNextItem = useRef<uniqueItem>({ "uuid": uuid().toString(), name: "Not selected" })
@@ -186,3 +171,7 @@ export function ItemsDnd() {
     </form>
   );
 }
+function mapItemToUniqueitem(i: IEditorItem): any {
+    throw new Error("Function not implemented.");
+}
+

@@ -8080,10 +8080,10 @@ rete-area-plugin@2.0.0-beta.1:
   resolved "https://registry.yarnpkg.com/rete-area-plugin/-/rete-area-plugin-2.0.0-beta.1.tgz#48f5ae722378dd6cf53abb111ef2c67e5a7095ec"
   integrity sha512-Wd6YsoBcHtDXk+dfc1XOOrv2Q5e4TJVgmPaZEdKpTVfV3/SatPYKPaMr/2PVPrgUnEHuEKF3wFqrD2x7QAGTdA==
 
-rete-auto-arrange-plugin@^2.0.0-beta.2:
-  version "2.0.0-beta.2"
-  resolved "https://registry.yarnpkg.com/rete-auto-arrange-plugin/-/rete-auto-arrange-plugin-2.0.0-beta.2.tgz#7d13e5b02373efd8be095fcc1ead7a8cd7eabaa7"
-  integrity sha512-S+X5qm0u0Swg/Wtl+ICG8DGRqt97bY+J+iadz4Y2vDpCEeD1L9NvJpiqwXVi91KMEiCQuhu5arNnEvm34FWEUw==
+rete-auto-arrange-plugin@2.0.0-beta.1:
+  version "2.0.0-beta.1"
+  resolved "https://registry.yarnpkg.com/rete-auto-arrange-plugin/-/rete-auto-arrange-plugin-2.0.0-beta.1.tgz#e907b45e888e5ef0a14a58fb94341f615035d400"
+  integrity sha512-Q0ucuzEjt1EhXe9nL/VWIabLVVcf+0Ki9sSZdj+H2Niq50qlHXxm9WDC4f9JfaIEGhxVNS1GtXxwO+6n8vlxyA==
 
 rete-connection-plugin@2.0.0-beta.1:
   version "2.0.0-beta.1"
@@ -8105,10 +8105,10 @@ rete-engine@2.0.0-beta.1:
   resolved "https://registry.yarnpkg.com/rete-engine/-/rete-engine-2.0.0-beta.1.tgz#ad3087039f1ee371203c89690c321934dc3ad421"
   integrity sha512-+Uh4+fopEBwjDH75nacHG2qb2pVS+sQ7DGEq2bwyFwUTtHgnqhUSVeb6l0NAMTWBviLUr8LNWGMN8LyPrUIztg==
 
-rete-react-render-plugin@2.0.0-beta.3:
-  version "2.0.0-beta.3"
-  resolved "https://registry.yarnpkg.com/rete-react-render-plugin/-/rete-react-render-plugin-2.0.0-beta.3.tgz#37f4f69bf81a987edfd136ef60d73f9dc24d1fbb"
-  integrity sha512-DSnkY6RP13QFkKxqaQS90M78SM/BM8kB+QGHO0CzxzqudPKzTfK6Kk0ITipUbTTmkZUruEys1qEoBua4KbxNaw==
+rete-react-render-plugin@2.0.0-beta.4:
+  version "2.0.0-beta.4"
+  resolved "https://registry.yarnpkg.com/rete-react-render-plugin/-/rete-react-render-plugin-2.0.0-beta.4.tgz#0b19e7e991f6cc206ea7155eaa73e838d7354232"
+  integrity sha512-N20z41BuOi7iNGG7TuFgWrBNMFbqcfgIj+JDXMFnSFcaUYP4WDz37dIlopbln5VIqE12r5zFxZ4imQXFsPYLSg==
   dependencies:
     usehooks-ts "^2.9.1"
 
@@ -8117,10 +8117,10 @@ rete-render-utils@2.0.0-beta.1:
   resolved "https://registry.yarnpkg.com/rete-render-utils/-/rete-render-utils-2.0.0-beta.1.tgz#5ea889912f70e1697bf3b54c43db0ba7aff03ae2"
   integrity sha512-pX94JXwSarkX1t1RTx5gNWzfne6JPDyg005jrnotqNZ+s17adxCGDJaO+kb9V1OVtSZVXdkPB2+/F3sX7bJJnw==
 
-rete@2.0.0-beta.2:
-  version "2.0.0-beta.2"
-  resolved "https://registry.yarnpkg.com/rete/-/rete-2.0.0-beta.2.tgz#2eff8f31a809c26a6bc139b7f30f63a07e9b6985"
-  integrity sha512-97lzilB/M8m2h/Qsms8HHUa5ErWdd7MGlvuwYUUpAHajAxO342+btumCp/MBGqwqINO8wDrti5m8z5Rd6BCPww==
+rete@2.0.0-beta.1:
+  version "2.0.0-beta.1"
+  resolved "https://registry.yarnpkg.com/rete/-/rete-2.0.0-beta.1.tgz#500e935c76b88e5ea0972968fff0ea44c9b50798"
+  integrity sha512-0iOQGooKehEOsQ4etAKXEclVOz6qd9RYvurafC9QkeiBFEbKpAFVpELZUOdxOG8OEQOYJ67VjrdUzxNiddEgAg==
 
 retry@^0.13.1:
   version "0.13.1"
