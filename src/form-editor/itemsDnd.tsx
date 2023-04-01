@@ -9,6 +9,7 @@ import { IEditorFormData, IEditorItem, StoreItemType, uniqueItem } from "../shar
 import { v4 as uuid } from 'uuid'
 import { SubItemDnD } from "./subItemDnD";
 import { GripVertical, PlusSquare, Trash2Fill } from "react-bootstrap-icons";
+import { useReteEditorReducer,useReteEditor } from "../flow-editor/state/reteEditorContext";
 
 let renderCount = 0;
 const compareItems = (a: IEditorItem, b: IEditorItem) => {
@@ -30,6 +31,8 @@ const mapItemToUniqueitem = (editorItem: IEditorItem): uniqueItem => {
 
 export function ItemsDnd() {
   const [store, setStore, notifyTopic, subscribeTopic] = useEditorWithSubscription()
+  const [editorInstance,setContenxt] = useReteEditorReducer()
+  const [editorInstance2] = useReteEditor()
   const defaultNextItem = useRef<uniqueItem>({ "uuid": uuid().toString(), name: "Not selected" })
   const { register, control, handleSubmit, watch } = useForm<IEditorFormData>({
     defaultValues: {
@@ -88,6 +91,7 @@ export function ItemsDnd() {
               type="button"
               className="btn btn-light"
               onClick={() => {
+                console.log('editorInstance',editorInstance,editorInstance2)
                 let newItem: IEditorItem = {
                   uuid: uuid().toString(),
                   itemName: "NewItemName",

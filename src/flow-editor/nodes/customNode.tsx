@@ -9,10 +9,8 @@ import styled, { css } from "styled-components";
 import { $nodewidth, $socketmargin, $socketsize } from "../constants";
 import { socket } from "./socket";
 import { IEditorItem } from "../../shared/types";
-import { InputControl } from "rete/_types/presets/classic";
 
 type NodeExtraData = { width?: number; height?: number };
-export declare class CustomInputControl extends InputControl<"text">{ }
 
 export const NodeStyles = styled.div<
   NodeExtraData & { selected: boolean; styles?: (props: any) => any }
@@ -121,7 +119,7 @@ export class CustomNodeElemeValue extends ClassicPreset.Node<
     this.addOutput("error", new ClassicPreset.Output(socket, "Error"));
   }
 
-  data(inputs: { in?: number[] }): {  } {
+  data(inputs: { in?: number[] }): { next: string, error: string } {
     console.log('data,inputs', inputs.in)
     return { next: "next", error: "error" };
   }

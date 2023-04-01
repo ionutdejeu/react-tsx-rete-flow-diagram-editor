@@ -33,7 +33,12 @@ export interface ISyncActions<T> {
     onRemoved: <T>(item: T) => void
     onOrderChanged: <T>(itemsChanged: T[]) => void
 }
-
+export interface AreaNodePickedEventType {
+    type: 'nodepicked';
+    data: {
+        id: string;
+    }
+}
 
 export interface IEditorAction {
     type: string,

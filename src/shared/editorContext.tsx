@@ -156,24 +156,6 @@ export function useEditorWithSubscription(): [
     return [store.get(), store.set, store.notifyTopic, store.subscribeTopic]
 }
 
-
-
-const useFormReducer = (): {
-    dispatch: (action: IFormAction) => void
-} => {
-    const store = useContext(EditorContextValue);
-    if (!store) {
-        throw new Error("Store not found")
-    }
-    const dispatch = (action: IEditorAction) => {
-
-    }
-
-    return {
-        dispatch
-    }
-}
-
 export function Provider({ children }: { children: React.ReactNode }) {
     return (
         <EditorContextValue.Provider value={useSubscriptionStoreData()}>
