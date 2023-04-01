@@ -194,10 +194,15 @@ export function useReteEditor() {
     return [editorInstance.editorInstance]
 
 }
-export function useReteEditorCreator() {
-    const [container, setContainer] = useState(null);
-    const [dummyValue,setDummyValue] = useState(4);
+export function useDefaultReteEditor(){
+    const [initInProgress,setInitiInProgress] = useState(false);
     const editorInstance = useRef<ReteEditorContextType>(reteContextDefaultValue);
+    return {initInProgress,setInitiInProgress, editorInstance };
+}
+export function useReteEditorCreator() {
+    
+    const reteContext = useContext(ReteEditorContextValue)
+    const [container, setContainer] = useState(null);
     const editorRef = useRef<NodeEditor<Schemes> | null>(null);
     const areaRef = useRef<AreaPlugin<Schemes, AreaExtra> | null>(null);
     const connectionRef = useRef<ConnectionPlugin<Schemes, AreaExtra> | null>(null);
@@ -321,18 +326,16 @@ export function useReteEditorCreator() {
         }
 
         //setEditorIstance({...newEditorInstance})
-        editorInstance.current = newEditorInstance
-        setDummyValue(10)
+        //editorInstance.current = newEditorInstance
         return newEditorInstance
     }
     useEffect(() => {
-        if (container && container != null) {
+        if (container && reteContext!=null && !reteContext.initInProgress) {
+            reteContext?.setInitiInProgress(true)
             createInstace(container).then((i: ReteEditorContextType) => {
                 console.log('setEditorIstance', i)
-
                 //setEditorIstance({...i})
-                editorInstance.current = i
-
+                reteContext.editorInstance.current = i
             })
         }
     }, [container]);
@@ -342,21 +345,21 @@ export function useReteEditorCreator() {
             //if (editorInstance && editorInstance.destroy != undefined) {
             //    editorInstance.destroy()
             //}
-            if (editorInstance.current && editorInstance.current.destroy != undefined) {
-                editorInstance.current?.destroy()
+            if (reteContext?.editorInstance.current && reteContext.editorInstance.current.destroy != undefined) {
+                reteContext?.editorInstance.current?.destroy()
             }
         };
     }, []);
-    console.log('createEditorInstance new value', editorInstance)
-    return { setContainer,dummyValue, editorInstance };
+    console.log('createEditorInstance new value', reteContext?.editorInstance)
+    return { setContainer };
 }
-type UseReteEditorContextType = ReturnType<typeof useReteEditorCreator>;
+type UseReteEditorContextType = ReturnType<typeof useDefaultReteEditor>;
 
 export const ReteEditorContextValue = createContext<UseReteEditorContextType | null>(null);
 
 export function ReteEditorProvider({ children }: { children: React.ReactNode }) {
     return (
-        <ReteEditorContextValue.Provider value={(useReteEditorCreator())}>
+        <ReteEditorContextValue.Provider value={(useDefaultReteEditor())}>
             {children}
         </ReteEditorContextValue.Provider>
     )

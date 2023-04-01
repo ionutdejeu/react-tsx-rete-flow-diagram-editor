@@ -6,12 +6,11 @@ import { useReteEditorCreator } from "./flow-editor/state/reteEditorContext";
  
 export default function App() {
   const ref = useRef(null);
-  const {setContainer,dummyValue,editorInstance} = useReteEditorCreator()
+  const {setContainer} = useReteEditorCreator()
   useEffect(() => {
     if (ref.current && ref.current!=null) {
       setContainer(ref.current);
-      console.log('createEditorInstance',editorInstance)
-      console.log('dummy value app',dummyValue)
+     
     }
   }, [ref.current]);
 
