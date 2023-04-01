@@ -9,8 +9,10 @@ import styled, { css } from "styled-components";
 import { $nodewidth, $socketmargin, $socketsize } from "../constants";
 import { socket } from "./socket";
 import { IEditorItem } from "../../shared/types";
+import { InputControl } from "rete/_types/presets/classic";
 
 type NodeExtraData = { width?: number; height?: number };
+export declare class CustomInputControl extends InputControl<"text">{ }
 
 export const NodeStyles = styled.div<
   NodeExtraData & { selected: boolean; styles?: (props: any) => any }
@@ -101,25 +103,27 @@ export type NodeComponent<Scheme extends ClassicScheme> = (
 ) => JSX.Element;
 export class CustomNodeElemeValue extends ClassicPreset.Node<
   { in: ClassicPreset.Socket },
-  { [index:string]: ClassicPreset.Socket },
-  { }
+  { [index: string]: ClassicPreset.Socket },
+  { value: ClassicPreset.InputControl<"number">}
 > {
   height = 190;
   width = 180;
-  formData:IEditorItem | null = null;
-  constructor(name:string,formElement:IEditorItem) {
+  formData: IEditorItem | null = null;
+  constructor(name: string, formElement: IEditorItem) {
     super(name);
-    this.formData = formElement   
+    this.formData = formElement
     const input = new ClassicPreset.Input(socket, "In");
+    input.addControl(
+      new ClassicPreset.InputControl("text", { initial: "dwadwa" })
+    )
     this.addInput("in", input);
-    this.addOutput("Next", new ClassicPreset.Output(socket, "Next"));
-    this.addOutput("Error", new ClassicPreset.Output(socket, "Error"));
-    
+    this.addOutput("next", new ClassicPreset.Output(socket, "Next"));
+    this.addOutput("error", new ClassicPreset.Output(socket, "Error"));
   }
 
-  data(inputs: { in:string[] }): { value: number } {
-    console.log('data,inputs',inputs.in)
-    return { value:1 };
+  data(inputs: { in?: number[] }): {  } {
+    console.log('data,inputs', inputs.in)
+    return { next: "next", error: "error" };
   }
 }
 export function CustomNode<Scheme extends ClassicScheme>(props: Props<Scheme>) {

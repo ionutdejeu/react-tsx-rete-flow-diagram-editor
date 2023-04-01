@@ -1,6 +1,6 @@
 import React, { useRef, createContext, useContext, useCallback, useState, useEffect } from "react";
 import { ClassicPreset } from "rete";
-import { IEditorItem, ISyncActions, StoreItemType } from './types'
+import { IEditorAction, IEditorItem, IFormAction, ISyncActions, StoreItemType } from './types'
 
 
 export type StoreType = {
@@ -116,7 +116,7 @@ export function useStoreValue<SelectorOutput>(
 }
 type UseStoreDataReturnType = ReturnType<typeof useSubscriptionStoreData>;
 
-const EditorContextValue = createContext<UseStoreDataReturnType | null>(null);
+export const EditorContextValue = createContext<UseStoreDataReturnType | null>(null);
 
 /**
  * This hook is to be used in any component
@@ -158,6 +158,21 @@ export function useEditorWithSubscription(): [
 
 
 
+const useFormReducer = (): {
+    dispatch: (action: IFormAction) => void
+} => {
+    const store = useContext(EditorContextValue);
+    if (!store) {
+        throw new Error("Store not found")
+    }
+    const dispatch = (action: IEditorAction) => {
+
+    }
+
+    return {
+        dispatch
+    }
+}
 
 export function Provider({ children }: { children: React.ReactNode }) {
     return (

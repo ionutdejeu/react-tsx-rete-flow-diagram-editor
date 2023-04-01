@@ -5,8 +5,10 @@ import ReactDOM from "react-dom";
 
 import "./styles.css";
 import { useEditor, useEditorWithSubscription } from "../shared/editorContext";
-import { IEditorItem, StoreItemType, uniqueItem } from "../shared/types";
+import { IEditorFormData, IEditorItem, StoreItemType, uniqueItem } from "../shared/types";
 import { v4 as uuid } from 'uuid'
+import { SubItemDnD } from "./subItemDnD";
+import { GripVertical, PlusSquare, Trash2Fill } from "react-bootstrap-icons";
 
 let renderCount = 0;
 const compareItems = (a: IEditorItem, b: IEditorItem) => {
@@ -29,7 +31,7 @@ const mapItemToUniqueitem = (editorItem: IEditorItem): uniqueItem => {
 export function ItemsDnd() {
   const [store, setStore, notifyTopic, subscribeTopic] = useEditorWithSubscription()
   const defaultNextItem = useRef<uniqueItem>({ "uuid": uuid().toString(), name: "Not selected" })
-  const { register, control, handleSubmit, watch } = useForm({
+  const { register, control, handleSubmit, watch } = useForm<IEditorFormData>({
     defaultValues: {
       test: [
         { uuid: uuid().toString(), itemName: "Element1", nextItem: defaultNextItem.current },
@@ -46,7 +48,7 @@ export function ItemsDnd() {
     const subscription = watch((value, { name, type }) => {
       let originalItems = value.test as IEditorItem[] || []
       originalItems.sort(compareItems)
-      let mappedItem = originalItems.map((i)=>mapItemToUniqueitem(i))
+      let mappedItem = originalItems.map((i) => mapItemToUniqueitem(i))
       setOrderedItems([...mappedItem])
       console.log('updated ordered items', originalItems)
     });
@@ -76,9 +78,33 @@ export function ItemsDnd() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <span className="counter">Render Count: {renderCount}</span>
+      <div className="container">
+        <div className="row">
+          <div className="col-auto m-0 p-0 align-middle">
+            <span className="align-middle m-0">Items:</span>
+          </div>
+          <div className="col">
+            <a
+              type="button"
+              className="btn btn-light"
+              onClick={() => {
+                let newItem: IEditorItem = {
+                  uuid: uuid().toString(),
+                  itemName: "NewItemName",
+                  nextItem: defaultNextItem.current,
+                  subItems: []
+                }
+                notifyTopic("added", newItem)
+                append(newItem);
+              }}
+            >
+              <PlusSquare size={30}></PlusSquare>
+            </a>
+          </div>
+        </div>
+      </div>
       <DragDropContext onDragEnd={handleDrag}>
-        <ul>
+        <div>
           <Droppable droppableId="test-items">
             {(provided, snapshot) => (
               <div {...provided.droppableProps} ref={provided.innerRef}>
@@ -90,49 +116,52 @@ export function ItemsDnd() {
                       index={index}
                     >
                       {(provided, snapshot) => (
-                        <li
+                        <div
                           key={index}
                           ref={provided.innerRef}
+                          className="input-group border border-danger"
                           {...provided.draggableProps}
+
                         >
                           <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              background: "skyblue",
-                              width: "35%"
-                            }}
                             {...provided.dragHandleProps}
                           >
-                            D
+                            <GripVertical size={20}></GripVertical>
                           </div>
-                          <input
+                          <input className="form-control"
                             defaultValue={`${item.itemName}`} // make sure to set up defaultValue
                             {...register(`test.${index}.itemName`)}
                           />
-                          <div className="form-group">
-                            <Controller
-                              name={`test.${index}.nextItem` as const}
-                              control={control}
-                              rules={{ required: true }}
-                              render={({ field: { onChange, value, ref } }) => (
-                                <div>
-                                  <select className="form-control" id={`tests.${index}.parentItem` as const} onChange={onChange}
-                                    defaultValue={value.uuid || defaultNextItem.current.uuid}
-                                    value={value.uuid || defaultNextItem.current.uuid}
-                                    ref={ref}>
-                                    <option value={defaultNextItem.current.uuid}>{defaultNextItem.current.name}</option>
-                                    {
-                                      orderedItem.map((opt, index) => {
-                                        return (<option key={index} value={opt.uuid}>{opt.name}</option>)
-                                      })
-                                    }
-                                  </select>
-                                </div>
-                              )}
-                            />
+                          <Controller
+                            name={`test.${index}.nextItem` as const}
+                            control={control}
+
+                            rules={{ required: true }}
+                            render={({ field: { onChange, value, ref } }) => (
+                              <div>
+                                {""&&console.log(value)}
+                                <select className="form-control" id={`tests.${index}.parentItem` as const} onChange={onChange}
+                                  defaultValue={value.uuid || defaultNextItem.current.uuid}
+                                  value={value.uuid || defaultNextItem.current.uuid}
+                                  ref={ref}>
+                                  <option value={defaultNextItem.current.uuid}>{defaultNextItem.current.name}</option>
+                                  {
+                                    orderedItem.map((opt, index) => {
+                                      return (<option key={index} value={opt.uuid}>{opt.name}</option>)
+                                    })
+                                  }
+                                </select>
+                              </div>
+                            )}
+                          />
+                          <div className="input-group-append" id="button-addon4">
+                            <button className="btn btn-outline" onClick={() => remove(index)} type="button"><Trash2Fill color="red"></Trash2Fill></button>
                           </div>
-                        </li>
+                          <div className="container">
+                            <SubItemDnD itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, register, control, item }}></SubItemDnD>
+                          </div>
+
+                        </div>
                       )}
                     </Draggable>
                   );
@@ -142,47 +171,8 @@ export function ItemsDnd() {
               </div>
             )}
           </Droppable>
-        </ul>
+        </div>
       </DragDropContext>
-
-      <section>
-        <button
-          type="button"
-          onClick={() => {
-            let newItem: IEditorItem = {
-              uuid: uuid().toString(),
-              itemName: "NewItemName",
-              nextItem: defaultNextItem.current,
-              subItems: []
-            }
-            notifyTopic("added", newItem)
-            append(newItem);
-          }}
-        >
-          Append
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-
-            move(0, 1);
-          }}
-        >
-          Move
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            remove(0);
-          }}
-        >
-          Remove
-        </button>
-      </section>
-
-      <input type="submit" />
     </form>
   );
 }
