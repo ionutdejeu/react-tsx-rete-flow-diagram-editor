@@ -7,8 +7,6 @@ import { IEditorFormData, IEditorItem, IEditorSubItem, StoreItemType, uniqueItem
 import { v4 as uuid } from 'uuid'
 import { GripVertical, PlusSquare, Trash2Fill } from "react-bootstrap-icons";
 
-let renderCount = 0;
-
 export function SubItemDnD({
   defaultNextItem,
   register, control,
@@ -51,7 +49,7 @@ export function SubItemDnD({
                 let newItem: IEditorSubItem = {
                   uuid: uuid().toString(),
                   name: "SubItemName",
-                  nextItem: defaultNextItem.current,
+                  nextItem: defaultNextItem.current.uuid,
                 }
                 //notifyTopic("added", newItem)
                 append(newItem);
@@ -99,8 +97,8 @@ export function SubItemDnD({
                             render={({ field: { onChange, value, ref } }) => (
                               <div>
                                 <select className="form-control" id={`tests.${index}.parentItem` as const} onChange={onChange}
-                                  defaultValue={value.uuid || defaultNextItem.current.uuid}
-                                  value={value.uuid || defaultNextItem.current.uuid}
+                                  defaultValue={value || defaultNextItem.current.uuid}
+                                  value={value || defaultNextItem.current.uuid}
                                   ref={ref}>
                                   <option value={defaultNextItem.current.uuid}>{defaultNextItem.current.name}</option>
                                   {

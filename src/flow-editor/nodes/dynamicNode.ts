@@ -1,5 +1,6 @@
 import { ClassicPreset } from "rete";
 import { socket } from "./socket";
+import { IEditorAction, IEditorItem } from "../../shared/types";
 
 
 export class DynamicNode extends ClassicPreset.Node<
@@ -13,17 +14,20 @@ export class DynamicNode extends ClassicPreset.Node<
 > {
     height = 190;
     width = 180;
-    constructor() {
-        super("DynamicNode");
-        const left = new ClassicPreset.Input(socket, "Left");
-        left.addControl(
+    item: IEditorItem | null = null;
+    constructor(i: IEditorItem) {
+        super(i.itemName);
+        this.item = i
+        this.id = i.uuid
+        const input = new ClassicPreset.Input(socket, "Input");
+        input.addControl(
             new ClassicPreset.InputControl("number", { initial: 0 })
         );
-
+        this.addInput("input", input)
         this.addControl(
             "value",
             new ClassicPreset.InputControl("text", {
-                readonly: true
+                readonly: false
             })
         );
 

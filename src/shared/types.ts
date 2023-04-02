@@ -7,7 +7,7 @@ export interface uniqueItem {
 export interface IEditorSubItem {
     uuid: string,
     name: string;
-    nextItem: uniqueItem
+    nextItem: string
 }
 
 export interface IEditorFormData {
@@ -18,7 +18,7 @@ export interface IEditorItem {
     uuid: string,
     itemName: string;
     subItems: IEditorSubItem[]
-    nextItem: uniqueItem
+    nextItem: string
 }
 export type StoreItemType = {
     formItemIndex: number,

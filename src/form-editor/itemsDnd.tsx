@@ -9,12 +9,14 @@ import { IEditorFormData, IEditorItem, StoreItemType, uniqueItem } from "../shar
 import { v4 as uuid } from 'uuid'
 import { SubItemDnD } from "./subItemDnD";
 import { GripVertical, PlusSquare, Trash2Fill } from "react-bootstrap-icons";
-import { useReteEditorReducer,useReteEditor } from "../flow-editor/state/reteEditorContext";
+import { useReteEditorReducer, useReteEditor } from "../flow-editor/state/reteEditorContext";
+import { editorActionCreate } from "../shared/editorCustomState";
+import { ItemDetails } from "./itemDetails";
 
 let renderCount = 0;
-const compareItems = (a: IEditorItem, b: IEditorItem) => {
-  const nameA = a.itemName.toUpperCase(); // ignore upper and lowercase
-  const nameB = b.itemName.toUpperCase(); // ignore upper and lowercase
+const compareItems = (a: uniqueItem, b: uniqueItem) => {
+  const nameA = a.name.toUpperCase(); // ignore upper and lowercase
+  const nameB = b.name.toUpperCase(); // ignore upper and lowercase
   if (nameA < nameB) {
     return -1;
   }
@@ -31,14 +33,13 @@ const mapItemToUniqueitem = (editorItem: IEditorItem): uniqueItem => {
 
 export function ItemsDnd() {
   const [store, setStore, notifyTopic, subscribeTopic] = useEditorWithSubscription()
-  const [editorInstance,setContenxt] = useReteEditorReducer()
-  const [editorInstance2] = useReteEditor()
+  const [editorContext, dispatchEditorAction] = useReteEditorReducer()
   const defaultNextItem = useRef<uniqueItem>({ "uuid": uuid().toString(), name: "Not selected" })
   const { register, control, handleSubmit, watch } = useForm<IEditorFormData>({
     defaultValues: {
       test: [
-        { uuid: uuid().toString(), itemName: "Element1", nextItem: defaultNextItem.current },
-        { uuid: uuid().toString(), itemName: "Element2", nextItem: defaultNextItem.current }
+        { uuid: uuid().toString(), itemName: "Element1", nextItem: defaultNextItem.current.uuid },
+        { uuid: uuid().toString(), itemName: "Element2", nextItem: defaultNextItem.current.uuid }
       ]
     }
   });
@@ -50,9 +51,9 @@ export function ItemsDnd() {
   useEffect(() => {
     const subscription = watch((value, { name, type }) => {
       let originalItems = value.test as IEditorItem[] || []
-      originalItems.sort(compareItems)
-      let mappedItem = originalItems.map((i) => mapItemToUniqueitem(i))
-      setOrderedItems([...mappedItem])
+      let mappedItems = originalItems.map((i) => mapItemToUniqueitem(i))
+      mappedItems.sort(compareItems)
+      setOrderedItems([...mappedItems])
       console.log('updated ordered items', originalItems)
     });
     return () => subscription.unsubscribe();
@@ -91,14 +92,13 @@ export function ItemsDnd() {
               type="button"
               className="btn btn-light"
               onClick={() => {
-                console.log('editorInstance',editorInstance,editorInstance2)
                 let newItem: IEditorItem = {
                   uuid: uuid().toString(),
                   itemName: "NewItemName",
-                  nextItem: defaultNextItem.current,
+                  nextItem: defaultNextItem.current.uuid,
                   subItems: []
                 }
-                notifyTopic("added", newItem)
+                dispatchEditorAction(editorActionCreate(newItem))
                 append(newItem);
               }}
             >
@@ -132,35 +132,7 @@ export function ItemsDnd() {
                           >
                             <GripVertical size={20}></GripVertical>
                           </div>
-                          <input className="form-control"
-                            defaultValue={`${item.itemName}`} // make sure to set up defaultValue
-                            {...register(`test.${index}.itemName`)}
-                          />
-                          <Controller
-                            name={`test.${index}.nextItem` as const}
-                            control={control}
-
-                            rules={{ required: true }}
-                            render={({ field: { onChange, value, ref } }) => (
-                              <div>
-                                {""&&console.log(value)}
-                                <select className="form-control" id={`tests.${index}.parentItem` as const} onChange={onChange}
-                                  defaultValue={value.uuid || defaultNextItem.current.uuid}
-                                  value={value.uuid || defaultNextItem.current.uuid}
-                                  ref={ref}>
-                                  <option value={defaultNextItem.current.uuid}>{defaultNextItem.current.name}</option>
-                                  {
-                                    orderedItem.map((opt, index) => {
-                                      return (<option key={index} value={opt.uuid}>{opt.name}</option>)
-                                    })
-                                  }
-                                </select>
-                              </div>
-                            )}
-                          />
-                          <div className="input-group-append" id="button-addon4">
-                            <button className="btn btn-outline" onClick={() => remove(index)} type="button"><Trash2Fill color="red"></Trash2Fill></button>
-                          </div>
+                          <ItemDetails itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, remove, register, control, item, watch }}></ItemDetails>
                           <div className="container">
                             <SubItemDnD itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, register, control, item }}></SubItemDnD>
                           </div>
