@@ -11,6 +11,7 @@ export const EditorActionTypes = {
     UpdateName:"UpdateName",
     UpdateNextItem:"UpdateNextItem"
 }
+
 export const editorActionCreate = (i:IEditorItem):IEditorAction=>{
     return {
         type:EditorActionTypes.Add,

@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { NodeEditor, GetSchemes, ClassicPreset } from "rete";
+import { NodeEditor, GetSchemes, ClassicPreset, ConnectionBase } from "rete";
 import { AreaPlugin, AreaExtensions } from "rete-area-plugin";
 import { ConnectionPlugin } from "rete-connection-plugin";
 import {
@@ -133,15 +133,15 @@ export function useReteEditorCreator() {
             Presets.classic.setup({
                 area: areaRef.current,
                 customize: {
-                    node(context) {
-                        return CustomNode;
-                    },
-                    socket(context) {
-                        return CustomSocket;
-                    },
-                    connection(context) {
-                        return CustomConnection;
-                    }
+                    //node(context) {
+                    //    return CustomNode;
+                    //},
+                    //socket(context) {
+                    //    return CustomSocket;
+                    //},
+                    //connection(context) {
+                    //    return CustomConnection;
+                    //}
                 }
             })
         );
@@ -253,40 +253,45 @@ const handedAddAction = (action: IEditorAction, editorContext: ReteEditorContext
 }
 const handleUpdateAction = (action: IEditorAction, editorContext: ReteEditorContextType) => {
     let item = action.payload as IEditorItem
-
+    if (!item && item == null) {
+        return
+    }
     let node = editorContext.editor?.getNode(item.uuid)
-    console.log(`found node for id ${item.uuid} `, node,item)
-
+    console.log(`found node for id ${item.uuid} `, node, item)
+    let editor = editorContext.editor
     if (node) {
         node.label = item.itemName
-        
+
     }
-    if (item.subItems.length > 0){
-        item.subItems.map((item,idx)=>{
-            //find the node related to 
-            //check if connection exists then 
-        })
+    if (editor) {
+        mapEditorConnectionsToMap(editor)
     }
+    //if (item && item!=null && item.subItems.length > 0){
+    //    item.subItems.map((item,idx)=>{
+    //        //find the node related to 
+    //        //check if connection exists then 
+    //    })
+    //}
 }
 
-const mapEditorConnectionsToMap = (e: NodeEditor<Schemes>)=>{
-    let mappedConnections = new Map<string,string>()
-    e.getConnections().map((c)=>{
-        console.log(c)
+const mapEditorConnectionsToMap = (e: NodeEditor<Schemes>) => {
+    let mappedConnections = new Map<string[], ConnProps>()
+    e.getConnections().map((c) => {
+        let source = c.source
+        //mappedConnections.set([])
+        console.log('mapEditorConnectionsToMap',source)
     })
-} 
+}
 
 const editorStateReducer = (action: IEditorAction, editorContext: ReteEditorContextType) => {
     switch (action.type) {
         case EditorActionTypes.Add:
             handedAddAction(action, editorContext)
-            
+
             break;
         case EditorActionTypes.Update:
             handleUpdateAction(action, editorContext)
-
             break;
-
         default:
             console.log('default action', action)
     }

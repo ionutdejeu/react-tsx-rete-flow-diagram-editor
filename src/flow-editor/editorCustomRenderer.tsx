@@ -115,7 +115,7 @@ class Connection<
 > extends ClassicPreset.Connection<A, B> { }
 
 type Node = NumberNode | AddNode | StartNode | CustomNodeElemeValue;
-type ConnProps = Connection<NumberNode, AddNode> | Connection<AddNode, AddNode>;
+type ConnProps = Connection<NumberNode, AddNode> | Connection<AddNode, AddNode> ;
 type Schemes = GetSchemes<Node, ConnProps>;
 
 type AreaExtra = ReactArea2D<any> | ContextMenuExtra<Schemes>;

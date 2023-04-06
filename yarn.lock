@@ -8082,10 +8082,10 @@ resolve@^2.0.0-next.4:
     path-parse "^1.0.7"
     supports-preserve-symlinks-flag "^1.0.0"
 
-rete-area-plugin@2.0.0-beta.1:
-  version "2.0.0-beta.1"
-  resolved "https://registry.yarnpkg.com/rete-area-plugin/-/rete-area-plugin-2.0.0-beta.1.tgz#48f5ae722378dd6cf53abb111ef2c67e5a7095ec"
-  integrity sha512-Wd6YsoBcHtDXk+dfc1XOOrv2Q5e4TJVgmPaZEdKpTVfV3/SatPYKPaMr/2PVPrgUnEHuEKF3wFqrD2x7QAGTdA==
+rete-area-plugin@2.0.0-beta.2:
+  version "2.0.0-beta.2"
+  resolved "https://registry.yarnpkg.com/rete-area-plugin/-/rete-area-plugin-2.0.0-beta.2.tgz#22fc52467f15d2c2409d2e5335d32244bcae7062"
+  integrity sha512-VNZOPWIb99XOcwWGdnjyBn2rvY5bMgT1nduiDFf9IZ40zwBsgT9JjnqlDKI2GzL8fGNB9+og2AkB26CwuUHnNg==
 
 rete-auto-arrange-plugin@2.0.0-beta.1:
   version "2.0.0-beta.1"
