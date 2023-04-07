@@ -1,0 +1,87 @@
+import React, { Ref, useEffect, useRef, useState } from "react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArrayWithId, UseFieldArrayRemove, useController, useWatch, UseFormWatch } from "react-hook-form";
+
+import "./styles.css";
+import { IEditorFormData, IEditorItem, IEditorSubItem, StoreItemType, uniqueItem } from "../shared/types";
+import { useReteEditorReducer } from "../flow-editor/state/reteEditorContext";
+import { editorActionUpdate } from "../shared/editorCustomState";
+import { Trash2Fill } from "react-bootstrap-icons";
+
+export function SubItemDetails({
+    defaultNextItem,
+    register, control,
+    orderedItems,
+    itemIndex,
+    remove,
+    item,
+    subItem,
+    watch }: {
+        defaultNextItem: React.MutableRefObject<uniqueItem>,
+        register: UseFormRegister<IEditorFormData>,
+        control: Control<IEditorFormData, any>,
+        orderedItems: uniqueItem[],
+        itemIndex: number,
+        remove: UseFieldArrayRemove,
+        item: FieldArrayWithId<IEditorFormData, "test", "id">,
+        subItem: FieldArrayWithId,
+        watch: UseFormWatch<IEditorFormData>
+    }) {
+    const [editorContext, dispatchEditorAction] = useReteEditorReducer()
+
+    const itemName = watch(`test.${itemIndex}.itemName`);
+    const next = watch(`test.${itemIndex}.nextItem`);
+
+    useEffect(() => {
+        console.log('dispatchEditorAction:editorActionUpdate', itemName,next)
+        let subItemParsed = subItem as unknown as IEditorSubItem
+        dispatchEditorAction(editorActionUpdate({
+            uuid: subItemParsed.uuid,
+            itemName: itemName,
+            nextItem: next,
+            subItems: item.subItems
+        }))
+        return () => {
+
+        }
+    }, [itemName, next])
+
+
+    return (
+        <>
+            <input className="form-control"
+                defaultValue={`${item.itemName}`}
+                {...register(`test.${itemIndex}.itemName`)}
+            />
+            <Controller
+                name={`test.${itemIndex}.nextItem` as const}
+                control={control}
+
+                rules={{ required: true }}
+                render={({ field: { onChange, value, ref } }) => (
+                    <div>
+                        <select className="form-control" id={`tests.${itemIndex}.parentItem` as const}
+                            onChange={(event: any) => {
+                                //dispatch change 
+
+                                onChange(event)
+                            }}
+                            defaultValue={value || defaultNextItem.current.uuid}
+                            value={value || defaultNextItem.current.uuid}
+                            ref={ref}>
+                            <option value={defaultNextItem.current.uuid}>{defaultNextItem.current.name}</option>
+                            {
+                                orderedItems.map((opt, index) => {
+                                    return (<option key={index} value={opt.uuid}>{opt.name}</option>)
+                                })
+                            }
+                        </select>
+                    </div>
+                )}
+            />
+            <div className="input-group-append" id="button-addon4">
+                <button className="btn btn-outline" onClick={() => remove(itemIndex)} type="button"><Trash2Fill color="red"></Trash2Fill></button>
+            </div>
+        </>
+    );
+}

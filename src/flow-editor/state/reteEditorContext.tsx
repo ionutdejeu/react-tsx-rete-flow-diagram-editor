@@ -28,6 +28,7 @@ import { CustomConnection } from "../nodes/CustomConnection";
 import { addCustomBackground } from "../nodes/custom-background";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { EditorActionTypes } from "../../shared/editorCustomState";
+import { DEFAULT_SELECTED_ITEM_ID } from "../../shared/constants";
 
 
 class Connection<
@@ -133,15 +134,15 @@ export function useReteEditorCreator() {
             Presets.classic.setup({
                 area: areaRef.current,
                 customize: {
-                    //node(context) {
-                    //    return CustomNode;
-                    //},
-                    //socket(context) {
-                    //    return CustomSocket;
-                    //},
-                    //connection(context) {
-                    //    return CustomConnection;
-                    //}
+                    node(context) {
+                        return CustomNode;
+                    },
+                    socket(context) {
+                        return CustomSocket;
+                    },
+                    connection(context) {
+                        return CustomConnection;
+                    }
                 }
             })
         );
@@ -261,11 +262,21 @@ const handleUpdateAction = (action: IEditorAction, editorContext: ReteEditorCont
     let editor = editorContext.editor
     if (node) {
         node.label = item.itemName
-
+        editorContext.area?.update("node", node.id)
+        // output nodes 
     }
     if (editor) {
         mapEditorConnectionsToMap(editor)
+        //check if connections are according to the changed event 
+
+        //output values are according to the changed event 
+        // 
     }
+    if (node && editor) {
+        addConnectionToNextItem(item, node as DynamicNode, editor)
+        updateOutputPorts(item,node as DynamicNode)
+    }
+
     //if (item && item!=null && item.subItems.length > 0){
     //    item.subItems.map((item,idx)=>{
     //        //find the node related to 
@@ -273,13 +284,45 @@ const handleUpdateAction = (action: IEditorAction, editorContext: ReteEditorCont
     //    })
     //}
 }
+const addConnectionToNextItem = (item: IEditorItem, n: DynamicNode, e: NodeEditor<Schemes>) => {
+    let nextConnction: ConnProps | null = null
+    e.getConnections().map((c) => {
+        if (c.source == item.uuid && c.sourceOutput == "next") {
+            nextConnction = c
+            //mappedConnections.set([])
+            console.log('found matching connction for item', item, c)
+        }
+    })
+    if (nextConnction == null) {
+        //create it
+        let targetNode = e.getNode(item.nextItem) as DynamicNode
+        if (targetNode) {
+            e.addConnection(new Connection(n, "next", targetNode, "input"));
+        } else {
+            console.warn("Was not able to find target node for item", item)
+        }
+    }
+    if (nextConnction && item.nextItem == DEFAULT_SELECTED_ITEM_ID) {
+        e.removeConnection(nextConnction['id'])
+    }
+}
 
+const updateOutputPorts = (item: IEditorItem, n: DynamicNode) => {
+    console.log('item outputs', n.outputs)
+
+    item.subItems.map((subItem) => {
+        let port: ClassicPreset.Socket | null = null
+    })
+}
+const createConnectionIfNotExists = (item: IEditorItem, n: DynamicNode, e: NodeEditor<Schemes>) => {
+
+}
 const mapEditorConnectionsToMap = (e: NodeEditor<Schemes>) => {
     let mappedConnections = new Map<string[], ConnProps>()
     e.getConnections().map((c) => {
         let source = c.source
         //mappedConnections.set([])
-        console.log('mapEditorConnectionsToMap',source)
+        console.log('mapEditorConnectionsToMap', c)
     })
 }
 

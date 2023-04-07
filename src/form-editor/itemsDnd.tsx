@@ -12,6 +12,7 @@ import { GripVertical, PlusSquare, Trash2Fill } from "react-bootstrap-icons";
 import { useReteEditorReducer, useReteEditor } from "../flow-editor/state/reteEditorContext";
 import { editorActionCreate } from "../shared/editorCustomState";
 import { ItemDetails } from "./itemDetails";
+import { DEFAULT_SELECTED_ITEM_ID } from "../shared/constants";
 
 let renderCount = 0;
 const compareItems = (a: uniqueItem, b: uniqueItem) => {
@@ -34,7 +35,7 @@ const mapItemToUniqueitem = (editorItem: IEditorItem): uniqueItem => {
 export function ItemsDnd() {
   const [store, setStore, notifyTopic, subscribeTopic] = useEditorWithSubscription()
   const [editorContext, dispatchEditorAction] = useReteEditorReducer()
-  const defaultNextItem = useRef<uniqueItem>({ "uuid": uuid().toString(), name: "Not selected" })
+  const defaultNextItem = useRef<uniqueItem>({ "uuid": DEFAULT_SELECTED_ITEM_ID, name: "Not selected" })
   const { register, control, handleSubmit, watch } = useForm<IEditorFormData>({
     defaultValues: {
       test: [
@@ -134,7 +135,7 @@ export function ItemsDnd() {
                           </div>
                           <ItemDetails itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, remove, register, control, item, watch }}></ItemDetails>
                           <div className="container">
-                            <SubItemDnD itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, register, control, item }}></SubItemDnD>
+                            <SubItemDnD itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, register, control, item,watch }}></SubItemDnD>
                           </div>
 
                         </div>

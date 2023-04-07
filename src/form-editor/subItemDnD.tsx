@@ -1,24 +1,28 @@
 import React, { Ref, useEffect, useRef, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArrayWithId } from "react-hook-form";
+import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArrayWithId, UseFormWatch } from "react-hook-form";
 
 import "./styles.css";
 import { IEditorFormData, IEditorItem, IEditorSubItem, StoreItemType, uniqueItem } from "../shared/types";
 import { v4 as uuid } from 'uuid'
 import { GripVertical, PlusSquare, Trash2Fill } from "react-bootstrap-icons";
+import { useReteEditorReducer } from "../flow-editor/state/reteEditorContext";
+import { editorActionUpdate } from "../shared/editorCustomState";
 
 export function SubItemDnD({
   defaultNextItem,
   register, control,
   orderedItems,
   itemIndex,
-  item }: {
+  item,
+  watch }: {
     defaultNextItem: React.MutableRefObject<uniqueItem>,
     register: UseFormRegister<IEditorFormData>,
     control: Control<IEditorFormData, any>,
     orderedItems: uniqueItem[],
     itemIndex: number,
-    item: FieldArrayWithId<IEditorFormData, "test", "id">
+    item: FieldArrayWithId<IEditorFormData, "test", "id">,
+    watch: UseFormWatch<IEditorFormData>
   }) {
 
   const { fields, append, move, remove } = useFieldArray({
@@ -26,14 +30,30 @@ export function SubItemDnD({
     name: `test.${itemIndex}.subItems`
   });
 
+  const itemName = watch(`test.${itemIndex}.itemName`);
+  const next = watch(`test.${itemIndex}.nextItem`);
+
+  const [editorContext, dispatchEditorAction] = useReteEditorReducer()
+
   //uses move from useFieldArray to change the position of the form
   const handleDrag = ({ source, destination }: any) => {
     if (destination) {
       move(source.index, destination.index);
+
     }
   };
+  useEffect(() => {
+    console.log('dispatchEditorAction:editorActionUpdate', itemName, next)
+    dispatchEditorAction(editorActionUpdate({
+      uuid: item.uuid,
+      itemName: itemName,
+      nextItem: next,
+      subItems: fields
+    }))
+    return () => {
 
-
+    }
+  }, [itemName, next])
   return (
     <>
       <div className="container">
@@ -51,6 +71,7 @@ export function SubItemDnD({
                   name: "SubItemName",
                   nextItem: defaultNextItem.current.uuid,
                 }
+                dispatchEditorAction(editorActionUpdate(item))
                 //notifyTopic("added", newItem)
                 append(newItem);
               }}
@@ -65,7 +86,7 @@ export function SubItemDnD({
           <Droppable droppableId="test-items">
             {(provided, snapshot) => (
               <div {...provided.droppableProps} ref={provided.innerRef}>
-                {fields.map((item, index) => {
+                {fields.map((subItem, index) => {
                   return (
                     <Draggable
                       key={`test.${index}`}
@@ -86,7 +107,7 @@ export function SubItemDnD({
 
                           </div>
                           <input
-                            defaultValue={`${item.name}`}
+                            defaultValue={`${subItem.name}`}
                             className="form-control"
                             {...register(`test.${itemIndex}.subItems.${index}.name`)}
                           />
@@ -111,7 +132,10 @@ export function SubItemDnD({
                             )}
                           />
                           <div className="input-group-append" id="button-addon4">
-                            <button className="btn btn-outline-secondary" onClick={() => remove(index)} type="button"><Trash2Fill size={10}></Trash2Fill></button>
+                            <button className="btn btn-outline-secondary" onClick={() => {
+                              remove(index)
+                              dispatchEditorAction(editorActionUpdate(item))
+                            }} type="button"><Trash2Fill size={10}></Trash2Fill></button>
                           </div>
                         </div>
                       )}
@@ -124,8 +148,6 @@ export function SubItemDnD({
           </Droppable>
         </div>
       </DragDropContext>
-
-
     </>
   );
 }
