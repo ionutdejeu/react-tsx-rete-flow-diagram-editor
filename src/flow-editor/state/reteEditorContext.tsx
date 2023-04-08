@@ -22,13 +22,15 @@ import { EndNode } from "../nodes/endNode";
 import { AddNode } from "../nodes/addNode";
 import { NumberNode } from "../nodes/numberNode";
 import { DynamicNode } from "../nodes/dynamicNode";
-import { AreaNodePickedEventType, IEditorAction, IEditorItem } from "../../shared/types";
+import { AreaNodePickedEventType, IEditorAction, IEditorItem, IEditorSubItem } from "../../shared/types";
 import { CustomSocket } from "../nodes/customSocket";
 import { CustomConnection } from "../nodes/CustomConnection";
 import { addCustomBackground } from "../nodes/custom-background";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { EditorActionTypes } from "../../shared/editorCustomState";
 import { DEFAULT_SELECTED_ITEM_ID } from "../../shared/constants";
+import { socket } from "../nodes/socket";
+import { constants } from "buffer";
 
 
 class Connection<
@@ -252,6 +254,15 @@ const handedAddAction = (action: IEditorAction, editorContext: ReteEditorContext
         return v
     });
 }
+const handleRemoveSubItem = (action: IEditorAction, editorContext: ReteEditorContextType) => {
+
+}
+const handleUpdateSubItem = (action: IEditorAction, editorContext: ReteEditorContextType) => {
+
+}
+const handleAddSubItem = (action: IEditorAction, editorContext: ReteEditorContextType) => {
+
+}
 const handleUpdateAction = (action: IEditorAction, editorContext: ReteEditorContextType) => {
     let item = action.payload as IEditorItem
     if (!item && item == null) {
@@ -274,7 +285,7 @@ const handleUpdateAction = (action: IEditorAction, editorContext: ReteEditorCont
     }
     if (node && editor) {
         addConnectionToNextItem(item, node as DynamicNode, editor)
-        updateOutputPorts(item,node as DynamicNode)
+        updateOutputPorts(item, node as DynamicNode)
     }
 
     //if (item && item!=null && item.subItems.length > 0){
@@ -286,12 +297,48 @@ const handleUpdateAction = (action: IEditorAction, editorContext: ReteEditorCont
 }
 const addConnectionToNextItem = (item: IEditorItem, n: DynamicNode, e: NodeEditor<Schemes>) => {
     let nextConnction: ConnProps | null = null
+
+    let connectionSourceOutputToTargetNode = new Map<string, string>();
+    connectionSourceOutputToTargetNode.set("next", item.nextItem)
+    let subItemsIds: string[] = []
+    item.subItems.map((subItem) => {
+        connectionSourceOutputToTargetNode.set(subItem.uuid, subItem.nextItem)
+        subItemsIds.push(subItem.uuid)
+    })
+
+    let connFound = e.getConnections().filter(c => c.source == item.uuid && subItemsIds.includes(c.sourceOutput))
+    let connToCreate = new Map<string, string>();
+
+    connectionSourceOutputToTargetNode.forEach((connctionLabel, targetUuid) => {
+        let connctionFound: ConnProps | null = null
+        e.getConnections().map((c) => {
+            if (c.source == item.uuid 
+                && c.target == targetUuid 
+                && c.sourceOutput == connctionLabel) {
+                connctionFound = c
+                //mappedConnections.set([])
+                console.log('found matching connction for item', item, c)
+            }
+        })
+        if (connctionFound == null) {
+            //create it
+            let targetNode = e.getNode(item.nextItem) as DynamicNode
+            if (targetNode) {
+                e.addConnection(new Connection(n, "next", targetNode, "input"));
+            } else {
+                console.warn("Was not able to find target node for item", item)
+            }
+        }
+    })
+
+
     e.getConnections().map((c) => {
         if (c.source == item.uuid && c.sourceOutput == "next") {
             nextConnction = c
             //mappedConnections.set([])
-            console.log('found matching connction for item', item, c)
+
         }
+
     })
     if (nextConnction == null) {
         //create it
@@ -308,13 +355,30 @@ const addConnectionToNextItem = (item: IEditorItem, n: DynamicNode, e: NodeEdito
 }
 
 const updateOutputPorts = (item: IEditorItem, n: DynamicNode) => {
-    console.log('item outputs', n.outputs)
 
+    console.log('updateOutputPorts', n.outputs, item)
+    let subItemsNames = item.subItems.map((i) => i.uuid)
+    let outputKeys = Object.keys(n.outputs)
+
+    let removedSubItems = outputKeys.filter(item => (subItemsNames.indexOf(item) < 0 && item != 'next'));
+    if (removedSubItems.length > 0) {
+        //remove these keys
+        removedSubItems.map(removedOutput => {
+            n.removeOutput(removedOutput)
+        })
+    }
     item.subItems.map((subItem) => {
-        let port: ClassicPreset.Socket | null = null
+        if (subItem.outputSocket != undefined) {
+            subItem.outputSocket.label = subItem.name
+        }
+        else {
+            n.addOutput(subItem.uuid, new ClassicPreset.Output(socket, subItem.name));
+            let newOutput = n.outputs[subItem.uuid]
+            subItem.outputSocket = newOutput
+        }
     })
 }
-const createConnectionIfNotExists = (item: IEditorItem, n: DynamicNode, e: NodeEditor<Schemes>) => {
+const updateSubItemsConnections = (item: IEditorItem, n: DynamicNode) => {
 
 }
 const mapEditorConnectionsToMap = (e: NodeEditor<Schemes>) => {
@@ -335,6 +399,15 @@ const editorStateReducer = (action: IEditorAction, editorContext: ReteEditorCont
         case EditorActionTypes.Update:
             handleUpdateAction(action, editorContext)
             break;
+        //case EditorActionTypes.RemoveSubItem:
+        //    handleUpdateAction(action, editorContext)
+        //    break;
+        //case EditorActionTypes.AddSubItem:
+        //    handleUpdateAction(action, editorContext)
+        //    break;
+        //case EditorActionTypes.UpdateSubItem:
+        //    handleUpdateAction(action, editorContext)
+        //    break;
         default:
             console.log('default action', action)
     }

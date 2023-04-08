@@ -36,7 +36,7 @@ export function ItemsDnd() {
   const [store, setStore, notifyTopic, subscribeTopic] = useEditorWithSubscription()
   const [editorContext, dispatchEditorAction] = useReteEditorReducer()
   const defaultNextItem = useRef<uniqueItem>({ "uuid": DEFAULT_SELECTED_ITEM_ID, name: "Not selected" })
-  const { register, control, handleSubmit, watch } = useForm<IEditorFormData>({
+  const { register, control, handleSubmit, watch, getValues } = useForm<IEditorFormData>({
     defaultValues: {
       test: [
         { uuid: uuid().toString(), itemName: "Element1", nextItem: defaultNextItem.current.uuid },
@@ -133,9 +133,9 @@ export function ItemsDnd() {
                           >
                             <GripVertical size={20}></GripVertical>
                           </div>
-                          <ItemDetails itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, remove, register, control, item, watch }}></ItemDetails>
+                          <ItemDetails itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, remove, register, control, item, watch, getValues }}></ItemDetails>
                           <div className="container">
-                            <SubItemDnD itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, register, control, item,watch }}></SubItemDnD>
+                            <SubItemDnD itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, register, control, item, watch, getValues }}></SubItemDnD>
                           </div>
 
                         </div>

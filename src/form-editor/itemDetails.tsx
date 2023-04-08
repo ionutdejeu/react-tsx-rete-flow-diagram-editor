@@ -1,6 +1,6 @@
 import React, { Ref, useEffect, useRef, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArrayWithId, UseFieldArrayRemove, useController, useWatch, UseFormWatch } from "react-hook-form";
+import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArrayWithId, UseFieldArrayRemove, useController, useWatch, UseFormWatch, UseFormGetValues } from "react-hook-form";
 
 import "./styles.css";
 import { IEditorFormData, IEditorItem, IEditorSubItem, StoreItemType, uniqueItem } from "../shared/types";
@@ -17,7 +17,8 @@ export function ItemDetails({
     itemIndex,
     remove,
     item,
-    watch }: {
+    watch,
+    getValues }: {
         defaultNextItem: React.MutableRefObject<uniqueItem>,
         register: UseFormRegister<IEditorFormData>,
         control: Control<IEditorFormData, any>,
@@ -25,7 +26,8 @@ export function ItemDetails({
         itemIndex: number,
         remove: UseFieldArrayRemove,
         item: FieldArrayWithId<IEditorFormData, "test", "id">,
-        watch: UseFormWatch<IEditorFormData>
+        watch: UseFormWatch<IEditorFormData>,
+        getValues:UseFormGetValues<IEditorFormData>
     }) {
     const [editorContext, dispatchEditorAction] = useReteEditorReducer()
 
@@ -33,12 +35,15 @@ export function ItemDetails({
     const next = watch(`test.${itemIndex}.nextItem`);
 
     useEffect(() => {
-        console.log('dispatchEditorAction:editorActionUpdate', itemName,next)
+        let subItems = getValues(`test.${itemIndex}.subItems`)
+        let itemNewValue = getValues(`test.${itemIndex}`)
+        console.log('dispatchEditorAction:editorActionUpdate', itemName,next,subItems,itemNewValue)
+
         dispatchEditorAction(editorActionUpdate({
             uuid: item.uuid,
-            itemName: itemName,
-            nextItem: next,
-            subItems: item.subItems
+            itemName: itemNewValue.itemName,
+            nextItem: itemNewValue.nextItem,
+            subItems: subItems
         }))
         return () => {
 

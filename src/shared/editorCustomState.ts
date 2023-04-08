@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { IEditorAction, IEditorItem, IFormAction } from "./types";
+import { IEditorAction, IEditorItem, IEditorSubItem, IFormAction } from "./types";
 import { EditorContextValue } from "./editorContext";
 import { EditorItem } from "../editor-types";
 
@@ -8,6 +8,9 @@ export const EditorActionTypes = {
     Add:"Add",
     Update:"Update",
     Remove:"Remove",
+    AddSubItem:"AddSubItem",
+    UpdateSubItem:"UpdateSubItem",
+    RemoveSubItem:"RemoveSubItem",
     UpdateName:"UpdateName",
     UpdateNextItem:"UpdateNextItem"
 }
@@ -33,6 +36,24 @@ export const editorActionDelete = (i:IEditorItem):IEditorAction=>{
     }
 }
 
+export const formActionRemoveSubItem = (i:IEditorSubItem):IEditorAction=>{
+    return {
+        type:EditorActionTypes.RemoveSubItem,
+        payload:i
+    }
+}
+export const formActionAddSubItem = (i:IEditorSubItem):IEditorAction=>{
+    return {
+        type:EditorActionTypes.AddSubItem,
+        payload:i
+    }
+}
+export const formActionUpdateItem = (i:IEditorSubItem):IEditorAction=>{
+    return {
+        type:EditorActionTypes.UpdateSubItem,
+        payload:i
+    }
+}
 
 export const useEditorDispatch = (): {
     dispatch: (action: IFormAction) => void

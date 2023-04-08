@@ -1,11 +1,11 @@
 import React, { Ref, useEffect, useRef, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArrayWithId, UseFieldArrayRemove, useController, useWatch, UseFormWatch } from "react-hook-form";
+import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArrayWithId, UseFieldArrayRemove, useController, useWatch, UseFormWatch, UseFormGetValues } from "react-hook-form";
 
 import "./styles.css";
 import { IEditorFormData, IEditorItem, IEditorSubItem, StoreItemType, uniqueItem } from "../shared/types";
 import { useReteEditorReducer } from "../flow-editor/state/reteEditorContext";
-import { editorActionUpdate } from "../shared/editorCustomState";
+import { editorActionUpdate, formActionAddSubItem, formActionRemoveSubItem, formActionUpdateItem } from "../shared/editorCustomState";
 import { Trash2Fill } from "react-bootstrap-icons";
 
 export function SubItemDetails({
@@ -16,7 +16,9 @@ export function SubItemDetails({
     remove,
     item,
     subItem,
-    watch }: {
+    subItemIndex,
+    watch,
+    getValues }: {
         defaultNextItem: React.MutableRefObject<uniqueItem>,
         register: UseFormRegister<IEditorFormData>,
         control: Control<IEditorFormData, any>,
@@ -25,21 +27,24 @@ export function SubItemDetails({
         remove: UseFieldArrayRemove,
         item: FieldArrayWithId<IEditorFormData, "test", "id">,
         subItem: FieldArrayWithId,
-        watch: UseFormWatch<IEditorFormData>
+        subItemIndex: number
+        watch: UseFormWatch<IEditorFormData>,
+        getValues: UseFormGetValues<IEditorFormData>
     }) {
     const [editorContext, dispatchEditorAction] = useReteEditorReducer()
 
-    const itemName = watch(`test.${itemIndex}.itemName`);
-    const next = watch(`test.${itemIndex}.nextItem`);
+    const itemName = watch(`test.${itemIndex}.subItems.${subItemIndex}.name`);
+    const next = watch(`test.${itemIndex}.subItems.${subItemIndex}.nextItem`);
 
     useEffect(() => {
-        console.log('dispatchEditorAction:editorActionUpdate', itemName,next)
-        let subItemParsed = subItem as unknown as IEditorSubItem
+        console.log('dispatchEditorAction:editorActionUpdate', itemName, next)
+        let parentItem = getValues(`test.${itemIndex}`)
+        let subItems = getValues(`test.${itemIndex}.subItems`)
         dispatchEditorAction(editorActionUpdate({
-            uuid: subItemParsed.uuid,
-            itemName: itemName,
-            nextItem: next,
-            subItems: item.subItems
+            uuid: item.uuid,
+            itemName: parentItem.itemName,
+            nextItem: parentItem.nextItem,
+            subItems: subItems
         }))
         return () => {
 
@@ -51,16 +56,16 @@ export function SubItemDetails({
         <>
             <input className="form-control"
                 defaultValue={`${item.itemName}`}
-                {...register(`test.${itemIndex}.itemName`)}
+                {...register(`test.${itemIndex}.subItems.${subItemIndex}.name`)}
             />
             <Controller
-                name={`test.${itemIndex}.nextItem` as const}
+                name={`test.${itemIndex}.subItems.${subItemIndex}.nextItem` as const}
                 control={control}
 
                 rules={{ required: true }}
                 render={({ field: { onChange, value, ref } }) => (
                     <div>
-                        <select className="form-control" id={`tests.${itemIndex}.parentItem` as const}
+                        <select className="form-control" id={`test.${itemIndex}.subItems.${subItemIndex}.nextItem` as const}
                             onChange={(event: any) => {
                                 //dispatch change 
 
@@ -80,7 +85,18 @@ export function SubItemDetails({
                 )}
             />
             <div className="input-group-append" id="button-addon4">
-                <button className="btn btn-outline" onClick={() => remove(itemIndex)} type="button"><Trash2Fill color="red"></Trash2Fill></button>
+                <button className="btn btn-outline" onClick={() => {
+                    remove(subItemIndex)
+                    let parentItem = getValues(`test.${itemIndex}`)
+                    let subItems = getValues(`test.${itemIndex}.subItems`)
+                    dispatchEditorAction(editorActionUpdate({
+                        uuid: item.uuid,
+                        itemName: item.itemName,
+                        nextItem: item.nextItem,
+                        subItems: subItems
+                    }))
+                    //dispatchEditorAction(editorActionUpdate(item))
+                }} type="button"><Trash2Fill color="red"></Trash2Fill></button>
             </div>
         </>
     );

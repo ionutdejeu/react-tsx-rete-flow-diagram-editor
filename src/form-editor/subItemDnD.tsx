@@ -1,13 +1,14 @@
 import React, { Ref, useEffect, useRef, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArrayWithId, UseFormWatch } from "react-hook-form";
+import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArrayWithId, UseFormWatch, UseFormGetValues } from "react-hook-form";
 
 import "./styles.css";
 import { IEditorFormData, IEditorItem, IEditorSubItem, StoreItemType, uniqueItem } from "../shared/types";
 import { v4 as uuid } from 'uuid'
 import { GripVertical, PlusSquare, Trash2Fill } from "react-bootstrap-icons";
 import { useReteEditorReducer } from "../flow-editor/state/reteEditorContext";
-import { editorActionUpdate } from "../shared/editorCustomState";
+import { editorActionUpdate, formActionAddSubItem } from "../shared/editorCustomState";
+import { SubItemDetails } from "./subItemDetails";
 
 export function SubItemDnD({
   defaultNextItem,
@@ -15,14 +16,17 @@ export function SubItemDnD({
   orderedItems,
   itemIndex,
   item,
-  watch }: {
+  watch,
+  getValues }: {
     defaultNextItem: React.MutableRefObject<uniqueItem>,
     register: UseFormRegister<IEditorFormData>,
     control: Control<IEditorFormData, any>,
     orderedItems: uniqueItem[],
     itemIndex: number,
     item: FieldArrayWithId<IEditorFormData, "test", "id">,
-    watch: UseFormWatch<IEditorFormData>
+    watch: UseFormWatch<IEditorFormData>,
+    getValues: UseFormGetValues<IEditorFormData>
+
   }) {
 
   const { fields, append, move, remove } = useFieldArray({
@@ -44,12 +48,14 @@ export function SubItemDnD({
   };
   useEffect(() => {
     console.log('dispatchEditorAction:editorActionUpdate', itemName, next)
-    dispatchEditorAction(editorActionUpdate({
-      uuid: item.uuid,
-      itemName: itemName,
-      nextItem: next,
-      subItems: fields
-    }))
+    
+    dispatchEditorAction(
+      editorActionUpdate({
+        uuid: item.uuid,
+        itemName: itemName,
+        nextItem: next,
+        subItems: fields
+      }))
     return () => {
 
     }
@@ -66,14 +72,19 @@ export function SubItemDnD({
               type="button"
               className="btn btn-light"
               onClick={() => {
+
                 let newItem: IEditorSubItem = {
                   uuid: uuid().toString(),
                   name: "SubItemName",
                   nextItem: defaultNextItem.current.uuid,
                 }
-                dispatchEditorAction(editorActionUpdate(item))
-                //notifyTopic("added", newItem)
+
                 append(newItem);
+                let itemNewValue = getValues(`test.${itemIndex}`)
+                let updatedItem: IEditorItem = { ...itemNewValue }
+                updatedItem.subItems = getValues(`test.${itemIndex}.subItems`)
+                console.log('editorSubItem:addNewItem', updatedItem)
+                dispatchEditorAction(editorActionUpdate(updatedItem))
               }}
             >
               <PlusSquare size={30}></PlusSquare>
@@ -83,19 +94,19 @@ export function SubItemDnD({
       </div>
       <DragDropContext onDragEnd={handleDrag}>
         <div>
-          <Droppable droppableId="test-items">
+          <Droppable droppableId={`test-${itemIndex}-sub-item`}>
             {(provided, snapshot) => (
               <div {...provided.droppableProps} ref={provided.innerRef}>
-                {fields.map((subItem, index) => {
+                {fields.map((subItem, subItemIndex) => {
                   return (
                     <Draggable
-                      key={`test.${index}`}
-                      draggableId={`test.${index}`}
-                      index={index}
+                      key={`test.${itemIndex}.subItems.${subItemIndex}`}
+                      draggableId={`test.${itemIndex}.subItems.${subItemIndex}`}
+                      index={subItemIndex}
                     >
                       {(provided, snapshot) => (
                         <div
-                          key={index}
+                          key={subItemIndex}
                           ref={provided.innerRef}
                           className="input-group"
                           {...provided.draggableProps}
@@ -106,37 +117,12 @@ export function SubItemDnD({
                             <GripVertical size={20}></GripVertical>
 
                           </div>
-                          <input
-                            defaultValue={`${subItem.name}`}
-                            className="form-control"
-                            {...register(`test.${itemIndex}.subItems.${index}.name`)}
-                          />
-                          <Controller
-                            name={`test.${itemIndex}.subItems.${index}.nextItem` as const}
-                            control={control}
-                            rules={{ required: true }}
-                            render={({ field: { onChange, value, ref } }) => (
-                              <div>
-                                <select className="form-control" id={`tests.${index}.parentItem` as const} onChange={onChange}
-                                  defaultValue={value || defaultNextItem.current.uuid}
-                                  value={value || defaultNextItem.current.uuid}
-                                  ref={ref}>
-                                  <option value={defaultNextItem.current.uuid}>{defaultNextItem.current.name}</option>
-                                  {
-                                    orderedItems.map((opt, index) => {
-                                      return (<option key={index} value={opt.uuid}>{opt.name}</option>)
-                                    })
-                                  }
-                                </select>
-                              </div>
-                            )}
-                          />
-                          <div className="input-group-append" id="button-addon4">
-                            <button className="btn btn-outline-secondary" onClick={() => {
-                              remove(index)
-                              dispatchEditorAction(editorActionUpdate(item))
-                            }} type="button"><Trash2Fill size={10}></Trash2Fill></button>
-                          </div>
+                          <SubItemDetails
+                            itemIndex={itemIndex}
+                            subItem={subItem}
+                            subItemIndex={subItemIndex}
+                            orderedItems={orderedItems}
+                            {...{ defaultNextItem, register, control, item, watch, remove, getValues }}></SubItemDetails>
                         </div>
                       )}
                     </Draggable>

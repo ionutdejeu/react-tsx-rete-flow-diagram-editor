@@ -1,10 +1,12 @@
 import { ClassicPreset } from "rete";
+import { Socket } from "rete/_types/presets/classic";
 
 export interface uniqueItem {
     uuid: string
     name: string
 }
 export interface IEditorSubItem {
+    outputSocket?:ClassicPreset.Output<ClassicPreset.Socket> | undefined
     uuid: string,
     name: string;
     nextItem: string
