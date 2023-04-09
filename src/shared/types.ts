@@ -52,3 +52,9 @@ export interface IFormAction {
     type: string
     payload: IEditorItem | IEditorSubItem
 }
+
+export interface IEditorConnection {
+    from: string
+    to: string
+    label:string
+}

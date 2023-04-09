@@ -37,7 +37,6 @@ export function SubItemDetails({
     const next = watch(`test.${itemIndex}.subItems.${subItemIndex}.nextItem`);
 
     useEffect(() => {
-        console.log('dispatchEditorAction:editorActionUpdate', itemName, next)
         let parentItem = getValues(`test.${itemIndex}`)
         let subItems = getValues(`test.${itemIndex}.subItems`)
         dispatchEditorAction(editorActionUpdate({

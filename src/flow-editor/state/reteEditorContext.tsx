@@ -22,7 +22,7 @@ import { EndNode } from "../nodes/endNode";
 import { AddNode } from "../nodes/addNode";
 import { NumberNode } from "../nodes/numberNode";
 import { DynamicNode } from "../nodes/dynamicNode";
-import { AreaNodePickedEventType, IEditorAction, IEditorItem, IEditorSubItem } from "../../shared/types";
+import { AreaNodePickedEventType, IEditorAction, IEditorConnection, IEditorItem, IEditorSubItem } from "../../shared/types";
 import { CustomSocket } from "../nodes/customSocket";
 import { CustomConnection } from "../nodes/CustomConnection";
 import { addCustomBackground } from "../nodes/custom-background";
@@ -246,13 +246,14 @@ export function ReteEditorProvider({ children }: { children: React.ReactNode }) 
 
 
 
-const handedAddAction = (action: IEditorAction, editorContext: ReteEditorContextType) => {
+const handedAddAction = async (action: IEditorAction, editorContext: ReteEditorContextType) => {
     let item = action.payload as IEditorItem
     const newN = new DynamicNode(action.payload as IEditorItem);
 
     editorContext.editor?.addNode(newN).then((v) => {
         return v
     });
+    await editorContext.arrange?.layout();
 }
 const handleRemoveSubItem = (action: IEditorAction, editorContext: ReteEditorContextType) => {
 
@@ -263,7 +264,7 @@ const handleUpdateSubItem = (action: IEditorAction, editorContext: ReteEditorCon
 const handleAddSubItem = (action: IEditorAction, editorContext: ReteEditorContextType) => {
 
 }
-const handleUpdateAction = (action: IEditorAction, editorContext: ReteEditorContextType) => {
+const handleUpdateAction = async (action: IEditorAction, editorContext: ReteEditorContextType) => {
     let item = action.payload as IEditorItem
     if (!item && item == null) {
         return
@@ -284,50 +285,104 @@ const handleUpdateAction = (action: IEditorAction, editorContext: ReteEditorCont
         // 
     }
     if (node && editor) {
-        addConnectionToNextItem(item, node as DynamicNode, editor)
         updateOutputPorts(item, node as DynamicNode)
+        updateConnections(item, node as DynamicNode, editor)
+    }
+    await editorContext.arrange?.layout();
+
+}
+const handleDeleteAction = async (action: IEditorAction, editorContext: ReteEditorContextType) => {
+    let item = action.payload as IEditorItem
+    if (!item && item == null) {
+        return
+    }
+    let node = editorContext.editor?.getNode(item.uuid)
+    let editor = editorContext.editor
+    if (node && editor) {
+        // delete all connections to this node 
+        let connctionMap = mapConnectionForItem(item)
+        connctionMap = getConnectionsFromMappedItems(connctionMap, editor)
+        console.log("connection map", connctionMap)
+        await deleteMappedConnections(connctionMap, editor)
+        let invConnectionMap = getConnctionToMappedItem(item,editor)
+        await deleteMappedConnections(invConnectionMap, editor)
+        await editor?.removeNode(item.uuid)
+        await editorContext.arrange?.layout();
     }
 
-    //if (item && item!=null && item.subItems.length > 0){
-    //    item.subItems.map((item,idx)=>{
-    //        //find the node related to 
-    //        //check if connection exists then 
-    //    })
-    //}
 }
-const addConnectionToNextItem = (item: IEditorItem, n: DynamicNode, e: NodeEditor<Schemes>) => {
-    let nextConnction: ConnProps | null = null
-
-    let connectionSourceOutputToTargetNode = new Map<string, string>();
-    connectionSourceOutputToTargetNode.set("next", item.nextItem)
-    let subItemsIds: string[] = []
+const deleteMappedConnections = async (conMap: Map<IEditorConnection, ConnProps | null>, e: NodeEditor<Schemes>) => {
+    for (let [connDescription, connction] of Array.from(conMap.entries())) {
+        if (connction) {
+            await e.removeConnection(connction?.id)
+        }
+    }
+}
+const mapConnectionForItem = (item: IEditorItem) => {
+    let connectionSourceOutputToTargetNode = new Map<IEditorConnection, ConnProps | null>();
+    connectionSourceOutputToTargetNode.set({ from: item.uuid, label: "next", to: item.nextItem }, null)
     item.subItems.map((subItem) => {
-        connectionSourceOutputToTargetNode.set(subItem.uuid, subItem.nextItem)
-        subItemsIds.push(subItem.uuid)
+        connectionSourceOutputToTargetNode.set({ from: item.uuid, label: subItem.uuid, to: subItem.nextItem }, null)
+    })
+    return connectionSourceOutputToTargetNode
+}
+
+const getConnectionsFromMappedItems = (connMap: Map<IEditorConnection, ConnProps | null>, e: NodeEditor<Schemes>) => {
+    let result = new Map<IEditorConnection, ConnProps | null>();
+    connMap.forEach((connction, connDescription) => {
+        result.set(connDescription, null)
+        e.getConnections().map((c) => {
+            if (c.source == connDescription.from
+                && c.sourceOutput == connDescription.label) {
+                result.set(connDescription, c)
+            }
+        })
     })
 
-    let connFound = e.getConnections().filter(c => c.source == item.uuid && subItemsIds.includes(c.sourceOutput))
-    let connToCreate = new Map<string, string>();
+    return result
+}
+const getConnctionToMappedItem = (item: IEditorItem, e: NodeEditor<Schemes>) => {
+    let result = new Map<IEditorConnection, ConnProps | null>();
+    e.getConnections().map((c) => {
+        if (c.target == item.uuid) {
+            result.set({
+                from: c.target,
+                label: c.sourceOutput,
+                to: c.target
+            }, c)
+        }
+    })
 
-    connectionSourceOutputToTargetNode.forEach((connctionLabel, targetUuid) => {
+    return result
+}
+const updateConnections = (item: IEditorItem, n: DynamicNode, e: NodeEditor<Schemes>) => {
+    let nextConnction: ConnProps | null = null
+    let connectionSourceOutputToTargetNode = new Map<string, string>();
+    connectionSourceOutputToTargetNode.set("next", item.nextItem)
+    item.subItems.map((subItem) => {
+        connectionSourceOutputToTargetNode.set(subItem.uuid, subItem.nextItem)
+    })
+    connectionSourceOutputToTargetNode.forEach((targetUuid, connctionLabel) => {
         let connctionFound: ConnProps | null = null
         e.getConnections().map((c) => {
-            if (c.source == item.uuid 
-                && c.target == targetUuid 
+            if (c.source == item.uuid
                 && c.sourceOutput == connctionLabel) {
                 connctionFound = c
-                //mappedConnections.set([])
                 console.log('found matching connction for item', item, c)
             }
         })
         if (connctionFound == null) {
             //create it
-            let targetNode = e.getNode(item.nextItem) as DynamicNode
+            let targetNode = e.getNode(targetUuid) as DynamicNode
             if (targetNode) {
-                e.addConnection(new Connection(n, "next", targetNode, "input"));
+                e.addConnection(new Connection(n, connctionLabel, targetNode, "input"));
             } else {
                 console.warn("Was not able to find target node for item", item)
             }
+        }
+
+        if (connctionFound != null && targetUuid == DEFAULT_SELECTED_ITEM_ID) {
+            e.removeConnection(connctionFound['id'])
         }
     })
 
@@ -390,24 +445,18 @@ const mapEditorConnectionsToMap = (e: NodeEditor<Schemes>) => {
     })
 }
 
-const editorStateReducer = (action: IEditorAction, editorContext: ReteEditorContextType) => {
+const editorStateReducer = async (action: IEditorAction, editorContext: ReteEditorContextType) => {
     switch (action.type) {
         case EditorActionTypes.Add:
-            handedAddAction(action, editorContext)
-
+            await handedAddAction(action, editorContext)
             break;
         case EditorActionTypes.Update:
-            handleUpdateAction(action, editorContext)
+            await handleUpdateAction(action, editorContext)
             break;
-        //case EditorActionTypes.RemoveSubItem:
-        //    handleUpdateAction(action, editorContext)
-        //    break;
-        //case EditorActionTypes.AddSubItem:
-        //    handleUpdateAction(action, editorContext)
-        //    break;
-        //case EditorActionTypes.UpdateSubItem:
-        //    handleUpdateAction(action, editorContext)
-        //    break;
+
+        case EditorActionTypes.Remove:
+            await handleDeleteAction(action, editorContext)
+            break;
         default:
             console.log('default action', action)
     }
@@ -423,7 +472,9 @@ export function useReteEditorReducer(): [
             throw new Error("Unable to perform add node, the editor is not initialised");
         }
         else if (editorContext?.editorInstance != undefined) {
-            editorStateReducer(action, editorContext?.editorInstance.current)
+            editorStateReducer(action, editorContext?.editorInstance.current).then(() => {
+
+            })
         }
     }, [])
     if (!editorContext) {

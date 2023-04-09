@@ -34,9 +34,7 @@ export function SubItemDnD({
     name: `test.${itemIndex}.subItems`
   });
 
-  const itemName = watch(`test.${itemIndex}.itemName`);
-  const next = watch(`test.${itemIndex}.nextItem`);
-
+ 
   const [editorContext, dispatchEditorAction] = useReteEditorReducer()
 
   //uses move from useFieldArray to change the position of the form
@@ -46,20 +44,7 @@ export function SubItemDnD({
 
     }
   };
-  useEffect(() => {
-    console.log('dispatchEditorAction:editorActionUpdate', itemName, next)
-    
-    dispatchEditorAction(
-      editorActionUpdate({
-        uuid: item.uuid,
-        itemName: itemName,
-        nextItem: next,
-        subItems: fields
-      }))
-    return () => {
-
-    }
-  }, [itemName, next])
+   
   return (
     <>
       <div className="container">

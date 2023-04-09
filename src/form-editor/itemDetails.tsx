@@ -8,7 +8,7 @@ import { v4 as uuid } from 'uuid'
 import { GripVertical, PlusSquare, Trash2Fill } from "react-bootstrap-icons";
 import { SubItemDnD } from "./subItemDnD";
 import { useReteEditorReducer } from "../flow-editor/state/reteEditorContext";
-import { editorActionUpdate } from "../shared/editorCustomState";
+import { editorActionDelete, editorActionUpdate } from "../shared/editorCustomState";
 
 export function ItemDetails({
     defaultNextItem,
@@ -27,7 +27,7 @@ export function ItemDetails({
         remove: UseFieldArrayRemove,
         item: FieldArrayWithId<IEditorFormData, "test", "id">,
         watch: UseFormWatch<IEditorFormData>,
-        getValues:UseFormGetValues<IEditorFormData>
+        getValues: UseFormGetValues<IEditorFormData>
     }) {
     const [editorContext, dispatchEditorAction] = useReteEditorReducer()
 
@@ -37,7 +37,7 @@ export function ItemDetails({
     useEffect(() => {
         let subItems = getValues(`test.${itemIndex}.subItems`)
         let itemNewValue = getValues(`test.${itemIndex}`)
-        console.log('dispatchEditorAction:editorActionUpdate', itemName,next,subItems,itemNewValue)
+        console.log('dispatchEditorAction:editorActionUpdate', itemName, next, subItems, itemNewValue)
 
         dispatchEditorAction(editorActionUpdate({
             uuid: item.uuid,
@@ -84,7 +84,10 @@ export function ItemDetails({
                 )}
             />
             <div className="input-group-append" id="button-addon4">
-                <button className="btn btn-outline" onClick={() => remove(itemIndex)} type="button"><Trash2Fill color="red"></Trash2Fill></button>
+                <button className="btn btn-outline" onClick={() => {
+                    dispatchEditorAction(editorActionDelete(item))
+                    remove(itemIndex)
+                }} type="button"><Trash2Fill color="red"></Trash2Fill></button>
             </div>
         </>
     );
