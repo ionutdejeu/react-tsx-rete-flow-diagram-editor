@@ -408,7 +408,24 @@ const updateConnections = (item: IEditorItem, n: DynamicNode, e: NodeEditor<Sche
         e.removeConnection(nextConnction['id'])
     }
 }
+const getRemovedPorts = (item: IEditorItem, n: DynamicNode):string[]=>{
+    let subItemsNames = item.subItems.map((i) => i.uuid)
+    let outputKeys = Object.keys(n.outputs)
+    let removedSubItems = outputKeys.filter(item => (subItemsNames.indexOf(item) < 0 && item != 'next'));
+     
+    return removedSubItems
+}
 
+const deleteConnectionsForRemovedPorts = (item:IEditorItem, n: DynamicNode,e: NodeEditor<Schemes>,removedSubItems:string[])=>{
+    if (removedSubItems.length > 0) {
+        //remove these keys
+        removedSubItems.map(removedOutput => {
+            e.getConnections().map(c=>{
+                if(c.source == item.uuid){}
+            })
+        })
+    }
+}
 const updateOutputPorts = (item: IEditorItem, n: DynamicNode) => {
 
     console.log('updateOutputPorts', n.outputs, item)
@@ -422,6 +439,7 @@ const updateOutputPorts = (item: IEditorItem, n: DynamicNode) => {
             n.removeOutput(removedOutput)
         })
     }
+    
     item.subItems.map((subItem) => {
         if (subItem.outputSocket != undefined) {
             subItem.outputSocket.label = subItem.name
