@@ -1,10 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import App from './App';
+import App from './AppContext';
 import reportWebVitals from './reportWebVitals';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Provider } from './shared/editorContext';
+import { ReteEditorProvider } from './flow-editor/state/reteEditorContext';
 
 
 const root = ReactDOM.createRoot(
@@ -13,7 +14,9 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <Provider>
-      <App />
+      <ReteEditorProvider>
+        <App />
+      </ReteEditorProvider>
     </Provider>
   </React.StrictMode>
 );

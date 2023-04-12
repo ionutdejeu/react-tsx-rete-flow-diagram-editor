@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { createEditor } from "./flow-editor/editor";
+import { createEditor } from "./flow-editor/editorOriginal";
 
 export function useRete(create: (el: HTMLElement) => Promise<() => void>) {
   const [container, setContainer] = useState(null);

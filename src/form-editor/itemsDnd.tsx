@@ -1,16 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import ReactDOM from "react-dom";
 
 import "./styles.css";
 import { useEditor, useEditorWithSubscription } from "../shared/editorContext";
-import { IEditorItem, StoreItemType } from "../shared/types";
+import { IEditorFormData, IEditorItem, StoreItemType, uniqueItem } from "../shared/types";
+import { v4 as uuid } from 'uuid'
+import { SubItemDnD } from "./subItemDnD";
+import { GripVertical, PlusSquare, Trash2Fill } from "react-bootstrap-icons";
+import { useReteEditorReducer, useReteEditor } from "../flow-editor/state/reteEditorContext";
+import { editorActionCreate } from "../shared/editorCustomState";
+import { ItemDetails } from "./itemDetails";
+import { DEFAULT_SELECTED_ITEM_ID } from "../shared/constants";
 
 let renderCount = 0;
-const compareItems = (a: IEditorItem, b: IEditorItem) => {
-  const nameA = a.itemName.toUpperCase(); // ignore upper and lowercase
-  const nameB = b.itemName.toUpperCase(); // ignore upper and lowercase
+const compareItems = (a: uniqueItem, b: uniqueItem) => {
+  const nameA = a.name.toUpperCase(); // ignore upper and lowercase
+  const nameB = b.name.toUpperCase(); // ignore upper and lowercase
   if (nameA < nameB) {
     return -1;
   }
@@ -21,14 +28,19 @@ const compareItems = (a: IEditorItem, b: IEditorItem) => {
   // names must be equal
   return 0;
 }
+const mapItemToUniqueitem = (editorItem: IEditorItem): uniqueItem => {
+  return { uuid: editorItem.uuid, name: editorItem.itemName }
+}
 
 export function ItemsDnd() {
   const [store, setStore, notifyTopic, subscribeTopic] = useEditorWithSubscription()
-  const { register, control, handleSubmit, watch } = useForm({
+  const [editorContext, dispatchEditorAction] = useReteEditorReducer()
+  const defaultNextItem = useRef<uniqueItem>({ "uuid": DEFAULT_SELECTED_ITEM_ID, name: "Not selected" })
+  const { register, control, handleSubmit, watch, getValues } = useForm<IEditorFormData>({
     defaultValues: {
       test: [
-        { parentItem: "", itemName: "Element1" },
-        { parentItem: "Element1", itemName: "Element2" }
+        { uuid: uuid().toString(), itemName: "Element1", nextItem: defaultNextItem.current.uuid },
+        { uuid: uuid().toString(), itemName: "Element2", nextItem: defaultNextItem.current.uuid }
       ]
     }
   });
@@ -36,13 +48,14 @@ export function ItemsDnd() {
     control,
     name: "test"
   });
-  const [orderedItem, setOrderedItems] = useState<IEditorItem[]>([])
+  const [orderedItem, setOrderedItems] = useState<uniqueItem[]>([])
   useEffect(() => {
     const subscription = watch((value, { name, type }) => {
       let originalItems = value.test as IEditorItem[] || []
-      originalItems.sort(compareItems)
-      setOrderedItems([...originalItems])
-      console.log('updated ordered items',originalItems)
+      let mappedItems = originalItems.map((i) => mapItemToUniqueitem(i))
+      mappedItems.sort(compareItems)
+      setOrderedItems([...mappedItems])
+      console.log('updated ordered items', originalItems)
     });
     return () => subscription.unsubscribe();
   }, [watch]);
@@ -70,9 +83,33 @@ export function ItemsDnd() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <span className="counter">Render Count: {renderCount}</span>
+      <div className="container">
+        <div className="row">
+          <div className="col-auto m-0 p-0 align-middle">
+            <span className="align-middle m-0">Items:</span>
+          </div>
+          <div className="col">
+            <a
+              type="button"
+              className="btn btn-light"
+              onClick={() => {
+                let newItem: IEditorItem = {
+                  uuid: uuid().toString(),
+                  itemName: "NewItemName",
+                  nextItem: defaultNextItem.current.uuid,
+                  subItems: []
+                }
+                dispatchEditorAction(editorActionCreate(newItem))
+                append(newItem);
+              }}
+            >
+              <PlusSquare size={30}></PlusSquare>
+            </a>
+          </div>
+        </div>
+      </div>
       <DragDropContext onDragEnd={handleDrag}>
-        <ul>
+        <div>
           <Droppable droppableId="test-items">
             {(provided, snapshot) => (
               <div {...provided.droppableProps} ref={provided.innerRef}>
@@ -84,48 +121,24 @@ export function ItemsDnd() {
                       index={index}
                     >
                       {(provided, snapshot) => (
-                        <li
+                        <div
                           key={index}
                           ref={provided.innerRef}
+                          className="input-group border border-danger"
                           {...provided.draggableProps}
+
                         >
                           <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              background: "skyblue",
-                              width: "35%"
-                            }}
                             {...provided.dragHandleProps}
                           >
-                            D
+                            <GripVertical size={20}></GripVertical>
                           </div>
-                          <input
-                            defaultValue={`${item.itemName}`} // make sure to set up defaultValue
-                            {...register(`test.${index}.itemName`)}
-                          />
-                          <div className="form-group">
-                            <Controller
-                              name={`test.${index}.parentItem` as const}
-                              control={control}
-                              rules={{ required: true }}
-                              render={({ field: { onChange, value, ref } }) => (
-                                <div>
-                                  <select className="form-control" id={`tests.${index}.parentItem` as const} onChange={onChange}
-                                    defaultValue={value || "NotSelected"}
-                                    value={value || "NotSelected"} ref={ref}>
-                                    <option value="NotSelected">NotSelected</option>
-                                    {
-                                      orderedItem.map((opt, index) => {
-                                        return (<option key={index} value={opt.itemName}>{opt.itemName}</option>)
-                                      })
-                                    }
-                                  </select>
-                                </div>
-                              )}
-                            />
+                          <ItemDetails itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, remove, register, control, item, watch, getValues }}></ItemDetails>
+                          <div className="container">
+                            <SubItemDnD itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, register, control, item, watch, getValues }}></SubItemDnD>
                           </div>
-                        </li>
+
+                        </div>
                       )}
                     </Draggable>
                   );
@@ -135,42 +148,8 @@ export function ItemsDnd() {
               </div>
             )}
           </Droppable>
-        </ul>
+        </div>
       </DragDropContext>
-
-      <section>
-        <button
-          type="button"
-          onClick={() => {
-            let newItem: IEditorItem = { parentItem: "", itemName: "NewItemName" }
-            notifyTopic("added", newItem)
-            append(newItem);
-          }}
-        >
-          Append
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-
-            move(0, 1);
-          }}
-        >
-          Move
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            remove(0);
-          }}
-        >
-          Remove
-        </button>
-      </section>
-
-      <input type="submit" />
     </form>
   );
 }

@@ -1,16 +1,15 @@
 import { ClassicPreset } from "rete";
 
 
-export class StartNode extends ClassicPreset.Node<
+export class EndNode extends ClassicPreset.Node<
     {},
     { value: ClassicPreset.Socket },
     { value: ClassicPreset.InputControl<"text"> }
 > {
-    height = 120;
-    width = 180;
 
-    constructor() {
-        super("Start");
+
+    constructor(string:string) {
+        super(string);
         
     }
     
