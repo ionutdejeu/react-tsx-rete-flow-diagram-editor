@@ -170,21 +170,21 @@ export function useReteEditorCreator() {
             console.log('addPipe', 'click', context)
             return context;
         })
-
-
-        const a = new NumberNode(1, process);
-        const b = new NumberNode(1, process);
-        const c = new AddNode(process, (n) => areaRef.current?.update("node", n.id));
-
-        const con1 = new Connection(a, "value", c, "left");
-        const con2 = new Connection(b, "value", c, "right");
-
-        await editorRef.current.addNode(a);
-        await editorRef.current.addNode(b);
-        await editorRef.current.addNode(c);
-
-        await editorRef.current.addConnection(con1);
-        await editorRef.current.addConnection(con2);
+        //
+        //
+        //const a = new NumberNode(1, process);
+        //const b = new NumberNode(1, process);
+        //const c = new AddNode(process, (n) => areaRef.current?.update("node", n.id));
+        //
+        //const con1 = new Connection(a, "value", c, "left");
+        //const con2 = new Connection(b, "value", c, "right");
+        //
+        //await editorRef.current.addNode(a);
+        //await editorRef.current.addNode(b);
+        //await editorRef.current.addNode(c);
+        //
+        //await editorRef.current.addConnection(con1);
+        //await editorRef.current.addConnection(con2);
 
         await arrangeRef.current.layout();
         await arrangeRef.current.layout({

@@ -38,10 +38,7 @@ export function ItemsDnd() {
   const defaultNextItem = useRef<uniqueItem>({ "uuid": DEFAULT_SELECTED_ITEM_ID, name: "Not selected" })
   const { register, control, handleSubmit, watch, getValues } = useForm<IEditorFormData>({
     defaultValues: {
-      test: [
-        { uuid: uuid().toString(), itemName: "Element1", nextItem: defaultNextItem.current.uuid },
-        { uuid: uuid().toString(), itemName: "Element2", nextItem: defaultNextItem.current.uuid }
-      ]
+      test: []
     }
   });
   const { fields, append, move, remove } = useFieldArray({

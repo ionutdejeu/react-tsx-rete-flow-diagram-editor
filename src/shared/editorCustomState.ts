@@ -48,7 +48,7 @@ export const formActionAddSubItem = (i:IEditorSubItem):IEditorAction=>{
         payload:i
     }
 }
-export const formActionUpdateItem = (i:IEditorSubItem):IEditorAction=>{
+export const formActionUpdateSubItem = (i:IEditorSubItem):IEditorAction=>{
     return {
         type:EditorActionTypes.UpdateSubItem,
         payload:i

@@ -5,7 +5,7 @@ import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArra
 import "./styles.css";
 import { IEditorFormData, IEditorItem, IEditorSubItem, StoreItemType, uniqueItem } from "../shared/types";
 import { useReteEditorReducer } from "../flow-editor/state/reteEditorContext";
-import { editorActionUpdate, formActionAddSubItem, formActionRemoveSubItem, formActionUpdateItem } from "../shared/editorCustomState";
+import { editorActionUpdate, formActionAddSubItem, formActionRemoveSubItem, formActionUpdateSubItem } from "../shared/editorCustomState";
 import { Trash2Fill } from "react-bootstrap-icons";
 
 export function SubItemDetails({
@@ -85,16 +85,11 @@ export function SubItemDetails({
             />
             <div className="input-group-append" id="button-addon4">
                 <button className="btn btn-outline" onClick={() => {
-                    remove(subItemIndex)
                     let parentItem = getValues(`test.${itemIndex}`)
                     let subItems = getValues(`test.${itemIndex}.subItems`)
-                    dispatchEditorAction(editorActionUpdate({
-                        uuid: item.uuid,
-                        itemName: item.itemName,
-                        nextItem: item.nextItem,
-                        subItems: subItems
-                    }))
-                    //dispatchEditorAction(editorActionUpdate(item))
+                    dispatchEditorAction(formActionRemoveSubItem({...(subItem as unknown as IEditorSubItem)}))
+                    remove(subItemIndex)
+
                 }} type="button"><Trash2Fill color="red"></Trash2Fill></button>
             </div>
         </>

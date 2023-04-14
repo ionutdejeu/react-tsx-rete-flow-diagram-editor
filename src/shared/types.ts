@@ -8,6 +8,7 @@ export interface uniqueItem {
 export interface IEditorSubItem {
     outputSocket?:ClassicPreset.Output<ClassicPreset.Socket> | undefined
     uuid: string,
+    parentUuid:string,
     name: string;
     nextItem: string
 }

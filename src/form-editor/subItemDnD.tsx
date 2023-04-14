@@ -26,7 +26,6 @@ export function SubItemDnD({
     item: FieldArrayWithId<IEditorFormData, "test", "id">,
     watch: UseFormWatch<IEditorFormData>,
     getValues: UseFormGetValues<IEditorFormData>
-
   }) {
 
   const { fields, append, move, remove } = useFieldArray({
@@ -60,16 +59,17 @@ export function SubItemDnD({
 
                 let newItem: IEditorSubItem = {
                   uuid: uuid().toString(),
+                  parentUuid:item.uuid,
                   name: "SubItemName",
                   nextItem: defaultNextItem.current.uuid,
                 }
 
                 append(newItem);
-                let itemNewValue = getValues(`test.${itemIndex}`)
-                let updatedItem: IEditorItem = { ...itemNewValue }
-                updatedItem.subItems = getValues(`test.${itemIndex}.subItems`)
-                console.log('editorSubItem:addNewItem', updatedItem)
-                dispatchEditorAction(editorActionUpdate(updatedItem))
+                //let itemNewValue = getValues(`test.${itemIndex}`)
+                //let updatedItem: IEditorItem = { ...itemNewValue }
+                //updatedItem.subItems = getValues(`test.${itemIndex}.subItems`)
+                console.log('editorSubItem:addNewItem', newItem)
+                dispatchEditorAction(formActionAddSubItem(newItem))
               }}
             >
               <PlusSquare size={30}></PlusSquare>
