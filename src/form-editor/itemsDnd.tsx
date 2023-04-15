@@ -9,7 +9,7 @@ import { IEditorFormData, IEditorItem, StoreItemType, uniqueItem } from "../shar
 import { v4 as uuid } from 'uuid'
 import { SubItemDnD } from "./subItemDnD";
 import { GripVertical, PlusSquare, Trash2Fill } from "react-bootstrap-icons";
-import { useReteEditorReducer, useReteEditor } from "../flow-editor/state/reteEditorContext";
+import { useReteEditorReducer, useReteEditorSubscription } from "../flow-editor/state/reteEditorContext";
 import { editorActionCreate } from "../shared/editorCustomState";
 import { ItemDetails } from "./itemDetails";
 import { DEFAULT_SELECTED_ITEM_ID } from "../shared/constants";
@@ -36,7 +36,7 @@ export function ItemsDnd() {
   const [store, setStore, notifyTopic, subscribeTopic] = useEditorWithSubscription()
   const [editorContext, dispatchEditorAction] = useReteEditorReducer()
   const defaultNextItem = useRef<uniqueItem>({ "uuid": DEFAULT_SELECTED_ITEM_ID, name: "Not selected" })
-  const { register, control, handleSubmit, watch, getValues } = useForm<IEditorFormData>({
+  const { register, control, handleSubmit, watch, getValues,setValue } = useForm<IEditorFormData>({
     defaultValues: {
       test: []
     }
@@ -77,7 +77,7 @@ export function ItemsDnd() {
   };
 
   renderCount++;
-
+   
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="container">
@@ -130,9 +130,9 @@ export function ItemsDnd() {
                           >
                             <GripVertical size={20}></GripVertical>
                           </div>
-                          <ItemDetails itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, remove, register, control, item, watch, getValues }}></ItemDetails>
+                          <ItemDetails itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, remove, register, control, item, watch, getValues,setValue }}></ItemDetails>
                           <div className="container">
-                            <SubItemDnD itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, register, control, item, watch, getValues }}></SubItemDnD>
+                            <SubItemDnD itemIndex={index} orderedItems={orderedItem} {...{ defaultNextItem, register, control, item, watch, getValues,setValue }}></SubItemDnD>
                           </div>
 
                         </div>

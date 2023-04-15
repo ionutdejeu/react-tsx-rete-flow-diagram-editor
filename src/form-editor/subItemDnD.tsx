@@ -1,6 +1,6 @@
 import React, { Ref, useEffect, useRef, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArrayWithId, UseFormWatch, UseFormGetValues } from "react-hook-form";
+import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArrayWithId, UseFormWatch, UseFormGetValues, UseFormSetValue } from "react-hook-form";
 
 import "./styles.css";
 import { IEditorFormData, IEditorItem, IEditorSubItem, StoreItemType, uniqueItem } from "../shared/types";
@@ -17,7 +17,7 @@ export function SubItemDnD({
   itemIndex,
   item,
   watch,
-  getValues }: {
+  getValues, setValue }: {
     defaultNextItem: React.MutableRefObject<uniqueItem>,
     register: UseFormRegister<IEditorFormData>,
     control: Control<IEditorFormData, any>,
@@ -25,7 +25,9 @@ export function SubItemDnD({
     itemIndex: number,
     item: FieldArrayWithId<IEditorFormData, "test", "id">,
     watch: UseFormWatch<IEditorFormData>,
-    getValues: UseFormGetValues<IEditorFormData>
+    getValues: UseFormGetValues<IEditorFormData>,
+    setValue: UseFormSetValue<IEditorFormData>
+
   }) {
 
   const { fields, append, move, remove } = useFieldArray({
@@ -33,7 +35,7 @@ export function SubItemDnD({
     name: `test.${itemIndex}.subItems`
   });
 
- 
+
   const [editorContext, dispatchEditorAction] = useReteEditorReducer()
 
   //uses move from useFieldArray to change the position of the form
@@ -43,7 +45,7 @@ export function SubItemDnD({
 
     }
   };
-   
+
   return (
     <>
       <div className="container">
@@ -59,7 +61,7 @@ export function SubItemDnD({
 
                 let newItem: IEditorSubItem = {
                   uuid: uuid().toString(),
-                  parentUuid:item.uuid,
+                  parentUuid: item.uuid,
                   name: "SubItemName",
                   nextItem: defaultNextItem.current.uuid,
                 }
@@ -107,7 +109,7 @@ export function SubItemDnD({
                             subItem={subItem}
                             subItemIndex={subItemIndex}
                             orderedItems={orderedItems}
-                            {...{ defaultNextItem, register, control, item, watch, remove, getValues }}></SubItemDetails>
+                            {...{ defaultNextItem, register, control, item, watch, remove, getValues,setValue }}></SubItemDetails>
                         </div>
                       )}
                     </Draggable>

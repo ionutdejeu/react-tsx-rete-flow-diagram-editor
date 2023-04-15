@@ -59,3 +59,8 @@ export interface IEditorConnection {
     to: string
     label:string
 }
+
+
+export interface IReteEditorAction { 
+    payload:IEditorConnection   
+}

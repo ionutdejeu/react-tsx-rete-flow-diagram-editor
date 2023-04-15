@@ -1,13 +1,13 @@
-import React, { Ref, useEffect, useRef, useState } from "react";
+import React, { Ref, useCallback, useEffect, useRef, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArrayWithId, UseFieldArrayRemove, useController, useWatch, UseFormWatch, UseFormGetValues } from "react-hook-form";
+import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArrayWithId, UseFieldArrayRemove, useController, useWatch, UseFormWatch, UseFormGetValues, UseFormSetValue } from "react-hook-form";
 
 import "./styles.css";
-import { IEditorFormData, IEditorItem, IEditorSubItem, StoreItemType, uniqueItem } from "../shared/types";
+import { IEditorFormData, IEditorItem, IEditorSubItem, IReteEditorAction, StoreItemType, uniqueItem } from "../shared/types";
 import { v4 as uuid } from 'uuid'
 import { GripVertical, PlusSquare, Trash2Fill } from "react-bootstrap-icons";
 import { SubItemDnD } from "./subItemDnD";
-import { useReteEditorReducer } from "../flow-editor/state/reteEditorContext";
+import { useReteEditorReducer, useReteEditorSubscription } from "../flow-editor/state/reteEditorContext";
 import { editorActionDelete, editorActionUpdate } from "../shared/editorCustomState";
 
 export function ItemDetails({
@@ -18,7 +18,7 @@ export function ItemDetails({
     remove,
     item,
     watch,
-    getValues }: {
+    getValues, setValue }: {
         defaultNextItem: React.MutableRefObject<uniqueItem>,
         register: UseFormRegister<IEditorFormData>,
         control: Control<IEditorFormData, any>,
@@ -27,9 +27,11 @@ export function ItemDetails({
         remove: UseFieldArrayRemove,
         item: FieldArrayWithId<IEditorFormData, "test", "id">,
         watch: UseFormWatch<IEditorFormData>,
-        getValues: UseFormGetValues<IEditorFormData>
+        getValues: UseFormGetValues<IEditorFormData>,
+        setValue: UseFormSetValue<IEditorFormData>
     }) {
     const [editorContext, dispatchEditorAction] = useReteEditorReducer()
+    const { setEntityId, callbackOnChange } = useReteEditorSubscription()
 
     const itemName = watch(`test.${itemIndex}.itemName`);
     const next = watch(`test.${itemIndex}.nextItem`);
@@ -49,8 +51,17 @@ export function ItemDetails({
 
         }
     }, [itemName, next])
+    const onEditorConnectionChangedForThiItem = useCallback((i: IReteEditorAction) => {
+        console.log('callbackOnChange', 'item', `test.${itemIndex}.itemName`, i)
+        setValue(`test.${itemIndex}.nextItem`,i.payload.to)
+    }, [])
+    useEffect(() => {
+        setEntityId(item.uuid)
+        callbackOnChange(onEditorConnectionChangedForThiItem)
+        return () => {
 
-
+        }
+    }, [item])
     return (
         <>
             <input className="form-control"

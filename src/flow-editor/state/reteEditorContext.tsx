@@ -22,7 +22,7 @@ import { EndNode } from "../nodes/endNode";
 import { AddNode } from "../nodes/addNode";
 import { NumberNode } from "../nodes/numberNode";
 import { DynamicNode } from "../nodes/dynamicNode";
-import { AreaNodePickedEventType, IEditorAction, IEditorConnection, IEditorItem, IEditorSubItem } from "../../shared/types";
+import { AreaNodePickedEventType, IEditorAction, IEditorConnection, IEditorItem, IEditorSubItem, IReteEditorAction } from "../../shared/types";
 import { CustomSocket } from "../nodes/customSocket";
 import { CustomConnection } from "../nodes/CustomConnection";
 import { addCustomBackground } from "../nodes/custom-background";
@@ -54,7 +54,9 @@ export type ReteEditorContextType = {
     arrange: AutoArrangePlugin<Schemes> | undefined;
     engine: DataflowEngine<Schemes> | undefined;
     destroy: (() => void) | undefined,
-    itemAddedEventHandler: ((i: IEditorItem) => void) | undefined
+    itemAddedEventHandler: ((i: IEditorItem) => void) | undefined,
+    subscribeToConnctionChanges: ((callback: (payload: IReteEditorAction) => void) => void) | undefined
+    unsubscribeToConnctionChanges: ((callback: (payload: IReteEditorAction) => void) => void) | undefined
 }
 
 const reteContextDefaultValue: ReteEditorContextType = {
@@ -65,7 +67,9 @@ const reteContextDefaultValue: ReteEditorContextType = {
     arrange: undefined,
     engine: undefined,
     itemAddedEventHandler: undefined,
-    destroy: undefined
+    destroy: undefined,
+    subscribeToConnctionChanges: undefined,
+    unsubscribeToConnctionChanges:undefined
 }
 
 export function useReteEditor() {
@@ -79,9 +83,14 @@ export function useReteEditor() {
     return [editorInstance.editorInstance]
 
 }
+
 export function useDefaultReteEditor() {
     const [initInProgress, setInitiInProgress] = useState(false);
     const editorInstance = useRef<ReteEditorContextType>(reteContextDefaultValue);
+
+
+
+
     return { initInProgress, setInitiInProgress, editorInstance };
 }
 export function useReteEditorCreator() {
@@ -94,6 +103,11 @@ export function useReteEditorCreator() {
     const renderRef = useRef<ReactRenderPlugin<Schemes> | null>(null);
     const arrangeRef = useRef<AutoArrangePlugin<Schemes> | null>(null);
     const engineRef = useRef<DataflowEngine<Schemes> | null>(null);
+    const subscribersList = useRef(new Set<(payload: IReteEditorAction) => void>());
+    const subsribeToItemEvents = useCallback((callback: (payload: IReteEditorAction) => void) => {
+        subscribersList.current.add(callback)
+        return () => subscribersList.current.delete(callback)
+    }, [])
 
     const createInstace = async (container: HTMLElement) => {
         editorRef.current = new NodeEditor<Schemes>();
@@ -160,31 +174,40 @@ export function useReteEditorCreator() {
         AreaExtensions.showInputControl(areaRef.current);
 
         editorRef.current.addPipe((context) => {
-            if (["connectioncreated", "connectionremoved"].includes(context.type)) {
-                process();
+            console.log('addPipe', 'click', context)
+            if (context.type == 'connectioncreated') {
+                let payload:IReteEditorAction = {
+                    payload:{
+                        from:context.data.source,
+                        label:context.data.sourceOutput,
+                        to:context.data.target,
+                    }
+                }
+                subscribersList.current.forEach((callback)=>callback(payload))
+            }
+            if (context.type == 'connectionremoved') {
+                let payload:IReteEditorAction = {
+                    payload:{
+                        from:context.data.source,
+                        label:context.data.sourceOutput,
+                        to:context.data.target,
+                    }
+                }
+                subscribersList.current.forEach((callback)=>callback(payload))
+            }
+            if (context.type == 'connectionremoved') {
+                let payload:IReteEditorAction = {
+                    payload:{
+                        from:context.data.source,
+                        label:context.data.sourceOutput,
+                        to:context.data.target,
+                    }
+                }
+                subscribersList.current.forEach((callback)=>callback(payload))
             }
             return context;
-        });
-
-        editorRef.current.addPipe((context) => {
-            console.log('addPipe', 'click', context)
-            return context;
         })
-        //
-        //
-        //const a = new NumberNode(1, process);
-        //const b = new NumberNode(1, process);
-        //const c = new AddNode(process, (n) => areaRef.current?.update("node", n.id));
-        //
-        //const con1 = new Connection(a, "value", c, "left");
-        //const con2 = new Connection(b, "value", c, "right");
-        //
-        //await editorRef.current.addNode(a);
-        //await editorRef.current.addNode(b);
-        //await editorRef.current.addNode(c);
-        //
-        //await editorRef.current.addConnection(con1);
-        //await editorRef.current.addConnection(con2);
+
 
         await arrangeRef.current.layout();
         await arrangeRef.current.layout({
@@ -192,6 +215,8 @@ export function useReteEditorCreator() {
 
             }
         })
+
+
         AreaExtensions.zoomAt(areaRef.current, editorRef.current.getNodes());
         let newEditorInstance = {
             editor: editorRef.current,
@@ -201,7 +226,13 @@ export function useReteEditorCreator() {
             arrange: arrangeRef.current,
             engine: engineRef.current,
             destroy: () => areaRef.current?.destroy(),
-            itemAddedEventHandler: undefined
+            itemAddedEventHandler: undefined,
+            subscribeToConnctionChanges: (callback: (payload: IReteEditorAction) => void) => {
+                subsribeToItemEvents(callback)
+            },
+            unsubscribeToConnctionChanges:(callback:(payload: IReteEditorAction) => void)=>{
+                subscribersList.current.delete(callback)
+            }
         }
 
         //setEditorIstance({...newEditorInstance})
@@ -255,15 +286,8 @@ const handedAddAction = async (action: IEditorAction, editorContext: ReteEditorC
     });
     await editorContext.arrange?.layout();
 }
-const handleRemoveSubItem = (action: IEditorAction, editorContext: ReteEditorContextType) => {
 
-}
-const handleUpdateSubItem = (action: IEditorAction, editorContext: ReteEditorContextType) => {
 
-}
-const handleAddSubItem = (action: IEditorAction, editorContext: ReteEditorContextType) => {
-
-}
 const handleUpdateAction = async (action: IEditorAction, editorContext: ReteEditorContextType) => {
     let item = action.payload as IEditorItem
     if (!item && item == null) {
@@ -289,6 +313,50 @@ const handleUpdateAction = async (action: IEditorAction, editorContext: ReteEdit
         updateConnections(item, node as DynamicNode, editor)
     }
     await editorContext.arrange?.layout();
+}
+const handleFormSubItemAdd = async (action: IEditorAction, editorContext: ReteEditorContextType) => {
+    let item = action.payload as IEditorSubItem
+    if (!item && item == null) {
+        return
+    }
+    let node = editorContext.editor?.getNode(item.parentUuid) as DynamicNode
+    console.log(`found node for id ${item.uuid} `, node, item)
+    let editor = editorContext.editor
+    if (node != null && node != undefined) {
+        addOutputport(item, node)
+        editorContext.area?.update("node", node.id)
+    }
+    await editorContext.arrange?.layout();
+
+}
+const handleFormSubItemUpdate = async (action: IEditorAction, editorContext: ReteEditorContextType) => {
+    let item = action.payload as IEditorSubItem
+    if (!item && item == null) {
+        return
+    }
+    let node = editorContext.editor?.getNode(item.parentUuid) as DynamicNode
+    console.log(`found node for id ${item.uuid} `, node, item)
+    let editor = editorContext.editor
+    if (node != null && node != undefined) {
+        updateOutput(item, node)
+        editorContext.area?.update("node", node.id)
+    }
+    await editorContext.arrange?.layout();
+
+}
+const handleFormSubItemRemove = async (action: IEditorAction, editorContext: ReteEditorContextType) => {
+    let item = action.payload as IEditorSubItem
+    if (!item && item == null) {
+        return
+    }
+    let node = editorContext.editor?.getNode(item.parentUuid) as DynamicNode
+    console.log(`found node for id ${item.uuid} `, node, item)
+    let editor = editorContext.editor
+    if (node != null && node != undefined) {
+        deleteOutput(item, node)
+        editorContext.area?.update("node", node.id)
+    }
+    await editorContext.arrange?.layout();
 
 }
 const handleDeleteAction = async (action: IEditorAction, editorContext: ReteEditorContextType) => {
@@ -304,13 +372,14 @@ const handleDeleteAction = async (action: IEditorAction, editorContext: ReteEdit
         connctionMap = getConnectionsFromMappedItems(connctionMap, editor)
         console.log("connection map", connctionMap)
         await deleteMappedConnections(connctionMap, editor)
-        let invConnectionMap = getConnctionToMappedItem(item,editor)
+        let invConnectionMap = getConnctionToMappedItem(item, editor)
         await deleteMappedConnections(invConnectionMap, editor)
         await editor?.removeNode(item.uuid)
         await editorContext.arrange?.layout();
     }
 
 }
+
 const deleteMappedConnections = async (conMap: Map<IEditorConnection, ConnProps | null>, e: NodeEditor<Schemes>) => {
     for (let [connDescription, connction] of Array.from(conMap.entries())) {
         if (connction) {
@@ -325,6 +394,10 @@ const mapConnectionForItem = (item: IEditorItem) => {
         connectionSourceOutputToTargetNode.set({ from: item.uuid, label: subItem.uuid, to: subItem.nextItem }, null)
     })
     return connectionSourceOutputToTargetNode
+}
+const mapConnectionsForSubItem = (item: IEditorSubItem) => {
+    let conMap = new Map<IEditorConnection, ConnProps | null>();
+    conMap.set({ from: item.uuid, label: item.uuid, to: item.nextItem }, null)
 }
 
 const getConnectionsFromMappedItems = (connMap: Map<IEditorConnection, ConnProps | null>, e: NodeEditor<Schemes>) => {
@@ -341,6 +414,7 @@ const getConnectionsFromMappedItems = (connMap: Map<IEditorConnection, ConnProps
 
     return result
 }
+
 const getConnctionToMappedItem = (item: IEditorItem, e: NodeEditor<Schemes>) => {
     let result = new Map<IEditorConnection, ConnProps | null>();
     e.getConnections().map((c) => {
@@ -408,22 +482,63 @@ const updateConnections = (item: IEditorItem, n: DynamicNode, e: NodeEditor<Sche
         e.removeConnection(nextConnction['id'])
     }
 }
-const getRemovedPorts = (item: IEditorItem, n: DynamicNode):string[]=>{
+
+
+const getRemovedPorts = (item: IEditorItem, n: DynamicNode): string[] => {
     let subItemsNames = item.subItems.map((i) => i.uuid)
     let outputKeys = Object.keys(n.outputs)
     let removedSubItems = outputKeys.filter(item => (subItemsNames.indexOf(item) < 0 && item != 'next'));
-     
+
     return removedSubItems
 }
 
-const deleteConnectionsForRemovedPorts = (item:IEditorItem, n: DynamicNode,e: NodeEditor<Schemes>,removedSubItems:string[])=>{
+const deleteConnectionsForRemovedPorts = (item: IEditorItem, n: DynamicNode, e: NodeEditor<Schemes>, removedSubItems: string[]) => {
     if (removedSubItems.length > 0) {
         //remove these keys
         removedSubItems.map(removedOutput => {
-            e.getConnections().map(c=>{
-                if(c.source == item.uuid){}
+            e.getConnections().map(c => {
+                if (c.source == item.uuid) { }
             })
         })
+    }
+}
+
+
+const addOutputport = (subItem: IEditorSubItem, n: DynamicNode) => {
+
+    console.log('addOutputport', n.outputs, subItem)
+    if (subItem.outputSocket != undefined) {
+        subItem.outputSocket.label = subItem.name
+    }
+    else {
+        n.addOutput(subItem.uuid, new ClassicPreset.Output(socket, subItem.name));
+        let newOutput = n.outputs[subItem.uuid]
+        subItem.outputSocket = newOutput
+    }
+}
+const updateOutput = (subItem: IEditorSubItem, n: DynamicNode) => {
+
+    console.log('updateOutput', n.outputs, subItem)
+    if (subItem.outputSocket != undefined) {
+        subItem.outputSocket.label = subItem.name
+    }
+    // try update based on label 
+    if (Object.keys(n.outputs).includes(subItem.uuid)) {
+        let output = n.outputs[subItem.uuid]
+        if (output) {
+            output.label = subItem.name
+        }
+    }
+}
+const deleteOutput = (subItem: IEditorSubItem, n: DynamicNode) => {
+
+    console.log('addOutputport', n.outputs, subItem)
+    if (subItem.outputSocket != undefined) {
+        n.removeOutput(subItem.uuid)
+    }
+    // try update based on label 
+    if (Object.keys(n.outputs).includes(subItem.uuid)) {
+        n.removeOutput(subItem.uuid)
     }
 }
 const updateOutputPorts = (item: IEditorItem, n: DynamicNode) => {
@@ -439,20 +554,18 @@ const updateOutputPorts = (item: IEditorItem, n: DynamicNode) => {
             n.removeOutput(removedOutput)
         })
     }
-    
-    item.subItems.map((subItem) => {
-        if (subItem.outputSocket != undefined) {
-            subItem.outputSocket.label = subItem.name
-        }
-        else {
-            n.addOutput(subItem.uuid, new ClassicPreset.Output(socket, subItem.name));
-            let newOutput = n.outputs[subItem.uuid]
-            subItem.outputSocket = newOutput
-        }
-    })
-}
-const updateSubItemsConnections = (item: IEditorItem, n: DynamicNode) => {
 
+    //item.subItems.map((subItem) => {
+    //    if (subItem.outputSocket != undefined) {
+    //        subItem.outputSocket.label = subItem.name
+    //    }
+    //    else {
+    //        n.addOutput(subItem.uuid, new ClassicPreset.Output(socket, subItem.name));
+    //        let newOutput = n.outputs[subItem.uuid]
+    //        subItem.outputSocket = newOutput
+    //    }
+    //})
+    //
 }
 const mapEditorConnectionsToMap = (e: NodeEditor<Schemes>) => {
     let mappedConnections = new Map<string[], ConnProps>()
@@ -475,10 +588,61 @@ const editorStateReducer = async (action: IEditorAction, editorContext: ReteEdit
         case EditorActionTypes.Remove:
             await handleDeleteAction(action, editorContext)
             break;
+
+        case EditorActionTypes.AddSubItem:
+            await handleFormSubItemAdd(action, editorContext)
+            break;
+        case EditorActionTypes.UpdateSubItem:
+            await handleFormSubItemUpdate(action, editorContext)
+            break;
+        case EditorActionTypes.RemoveSubItem:
+            await handleFormSubItemRemove(action, editorContext)
+            break;
         default:
             console.log('default action', action)
     }
 
+}
+export const useReteEditorSubscription = (): {
+    setEntityId: (entityId: string) => void,
+    callbackOnChange: (callback: (i: IReteEditorAction) => void) => void
+} => {
+    const editorContext = useContext(ReteEditorContextValue);
+    const [itemId, setItemId] = useState("")
+    const itemUuid = useRef("")
+    const callbackRef = useRef<(i: IReteEditorAction) => void>()
+    useEffect(() => {
+        if (editorContext?.editorInstance == undefined) {
+            throw new Error("Unable to perform add node, the editor is not initialised");
+        }
+        else if (editorContext?.editorInstance != undefined
+            && editorContext?.editorInstance?.current != undefined
+            && editorContext?.editorInstance?.current?.subscribeToConnctionChanges != undefined) {
+            editorContext?.editorInstance?.current?.subscribeToConnctionChanges(callbackFromReteEditor)
+        }
+        return ()=>{
+            if (editorContext?.editorInstance != undefined
+                && editorContext?.editorInstance?.current != undefined
+                && editorContext?.editorInstance?.current?.unsubscribeToConnctionChanges != undefined) {
+                editorContext?.editorInstance?.current?.unsubscribeToConnctionChanges(callbackFromReteEditor)
+            }
+        }
+    }, [])
+    const callbackFromReteEditor = useCallback((i: IReteEditorAction) => {
+        console.log('callbackFromReteEditor',i,callbackRef)
+        if(itemUuid.current == i.payload.from && callbackRef.current){
+            callbackRef.current(i)
+        }
+    }, [])
+    const setItemUuid = useCallback((uuid: string) => {
+        itemUuid.current = uuid
+    }, [])
+    const callbackForSuscription = useCallback((callback: (i: IReteEditorAction) => void) => {
+        callbackRef.current = callback
+    }, [])
+
+
+    return { setEntityId: setItemUuid, callbackOnChange: callbackForSuscription }
 }
 export function useReteEditorReducer(): [
     editorContext: UseReteEditorContextType,

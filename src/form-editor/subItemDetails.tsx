@@ -1,10 +1,10 @@
-import React, { Ref, useEffect, useRef, useState } from "react";
+import React, { Ref, useCallback, useEffect, useRef, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArrayWithId, UseFieldArrayRemove, useController, useWatch, UseFormWatch, UseFormGetValues } from "react-hook-form";
+import { useForm, useFieldArray, Controller, UseFormRegister, Control, FieldArrayWithId, UseFieldArrayRemove, useController, useWatch, UseFormWatch, UseFormGetValues, UseFormSetValue } from "react-hook-form";
 
 import "./styles.css";
-import { IEditorFormData, IEditorItem, IEditorSubItem, StoreItemType, uniqueItem } from "../shared/types";
-import { useReteEditorReducer } from "../flow-editor/state/reteEditorContext";
+import { IEditorFormData, IEditorItem, IEditorSubItem, IReteEditorAction, StoreItemType, uniqueItem } from "../shared/types";
+import { useReteEditorReducer, useReteEditorSubscription } from "../flow-editor/state/reteEditorContext";
 import { editorActionUpdate, formActionAddSubItem, formActionRemoveSubItem, formActionUpdateSubItem } from "../shared/editorCustomState";
 import { Trash2Fill } from "react-bootstrap-icons";
 
@@ -18,7 +18,7 @@ export function SubItemDetails({
     subItem,
     subItemIndex,
     watch,
-    getValues }: {
+    getValues, setValue }: {
         defaultNextItem: React.MutableRefObject<uniqueItem>,
         register: UseFormRegister<IEditorFormData>,
         control: Control<IEditorFormData, any>,
@@ -29,9 +29,12 @@ export function SubItemDetails({
         subItem: FieldArrayWithId,
         subItemIndex: number
         watch: UseFormWatch<IEditorFormData>,
-        getValues: UseFormGetValues<IEditorFormData>
+        getValues: UseFormGetValues<IEditorFormData>,
+        setValue: UseFormSetValue<IEditorFormData>
+
     }) {
     const [editorContext, dispatchEditorAction] = useReteEditorReducer()
+    const { setEntityId, callbackOnChange } = useReteEditorSubscription()
 
     const itemName = watch(`test.${itemIndex}.subItems.${subItemIndex}.name`);
     const next = watch(`test.${itemIndex}.subItems.${subItemIndex}.nextItem`);
@@ -39,18 +42,20 @@ export function SubItemDetails({
     useEffect(() => {
         let parentItem = getValues(`test.${itemIndex}`)
         let subItems = getValues(`test.${itemIndex}.subItems`)
-        dispatchEditorAction(editorActionUpdate({
-            uuid: item.uuid,
-            itemName: parentItem.itemName,
-            nextItem: parentItem.nextItem,
-            subItems: subItems
-        }))
+        let subItemValue = getValues(`test.${itemIndex}.subItems.${subItemIndex}`)
+
+        dispatchEditorAction(formActionUpdateSubItem({ ...(subItemValue as unknown as IEditorSubItem) }))
         return () => {
 
         }
     }, [itemName, next])
-
-
+    const onEditorConnectionChangedForThiItem = useCallback((i: IReteEditorAction) => {
+        console.log('callbackOnChange', 'subItem', `test.${itemIndex}.subItems.${subItemIndex}`, i)
+    }, [])
+    useEffect(() => {
+        setEntityId((subItem as unknown as IEditorSubItem).uuid)
+        callbackOnChange(onEditorConnectionChangedForThiItem)
+    }, [subItem])
     return (
         <>
             <input className="form-control"
@@ -87,7 +92,7 @@ export function SubItemDetails({
                 <button className="btn btn-outline" onClick={() => {
                     let parentItem = getValues(`test.${itemIndex}`)
                     let subItems = getValues(`test.${itemIndex}.subItems`)
-                    dispatchEditorAction(formActionRemoveSubItem({...(subItem as unknown as IEditorSubItem)}))
+                    dispatchEditorAction(formActionRemoveSubItem({ ...(subItem as unknown as IEditorSubItem) }))
                     remove(subItemIndex)
 
                 }} type="button"><Trash2Fill color="red"></Trash2Fill></button>
