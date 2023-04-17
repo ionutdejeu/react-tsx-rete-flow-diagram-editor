@@ -51,6 +51,7 @@ export function SubItemDetails({
     }, [itemName, next])
     const onEditorConnectionChangedForThiItem = useCallback((i: IReteEditorAction) => {
         console.log('callbackOnChange', 'subItem', `test.${itemIndex}.subItems.${subItemIndex}`, i)
+        setValue(`test.${itemIndex}.subItems.${subItemIndex}.nextItem`,i.payload.to)
     }, [])
     useEffect(() => {
         setEntityId((subItem as unknown as IEditorSubItem).uuid)
